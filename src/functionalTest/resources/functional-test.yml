@@ -1,0 +1,11 @@
+functional:
+  baseUrl: ${BANKING_BASE_URL:http://localhost:8080}
+  wiremock:
+    port: 8089
+  timeouts:
+    connect: 5000
+    read: 30000
+  retries:
+    maxAttempts: 3
+    delayMs: 1000
+

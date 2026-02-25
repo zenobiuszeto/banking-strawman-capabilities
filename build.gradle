@@ -1,0 +1,175 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.0'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'io.gatling.gradle' version '3.10.1'
+}
+
+group = 'com.banking'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = '21'
+    targetCompatibility = '21'
+}
+
+repositories {
+    mavenCentral()
+}
+
+// ── Suppress Gatling plugin config-mutation deprecation warnings ──────────────
+// Gatling 3.x mutates :compileOnly after resolution; silence until plugin is updated.
+gradle.projectsEvaluated {
+    configurations.configureEach { cfg ->
+        cfg.resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    }
+}
+
+sourceSets {
+    integrationTest {
+        java.srcDir file('src/integration-test/java')
+        resources.srcDir file('src/integration-test/resources')
+        compileClasspath += sourceSets.main.output + sourceSets.test.output
+        runtimeClasspath += sourceSets.main.output + sourceSets.test.output
+    }
+    functionalTest {
+        java.srcDir file('src/functionalTest/java')
+        // Resources declared explicitly — do NOT inherit from main to avoid duplicates
+        resources.srcDirs = [file('src/functionalTest/resources')]
+        compileClasspath += sourceSets.main.output + sourceSets.test.output
+        runtimeClasspath += sourceSets.main.output + sourceSets.test.output
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+    functionalTestImplementation.extendsFrom testImplementation
+    functionalTestRuntimeOnly.extendsFrom testRuntimeOnly
+}
+
+dependencies {
+    // Spring Boot Web
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Spring Data JPA
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.postgresql:postgresql:42.7.1'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+
+    // Spring Data MongoDB
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
+    // Spring Data Redis
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+
+    // Spring Kafka
+    implementation 'org.springframework.kafka:spring-kafka'
+
+    // Monitoring and Observability
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+
+    // Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // OAuth2 Resource Server (JWT / Keycloak)
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+
+    // Spring Batch + Quartz Scheduler
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+    implementation 'org.springframework.boot:spring-boot-starter-quartz'
+
+    // Resilience4j Circuit Breaker
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-micrometer:2.2.0'
+
+    // Temporal Workflow SDK
+    implementation 'io.temporal:temporal-sdk:1.24.1'
+
+    // OpenAPI / Swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.38'
+    annotationProcessor 'org.projectlombok:lombok:1.18.38'
+    testCompileOnly 'org.projectlombok:lombok:1.18.38'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.38'
+
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.testcontainers:testcontainers:1.19.3'
+    testImplementation 'org.testcontainers:postgresql:1.19.3'
+    testImplementation 'org.testcontainers:mongodb:1.19.3'
+    testImplementation 'org.testcontainers:kafka:1.19.3'
+    testImplementation 'com.h2database:h2'
+
+    // Mockito/ByteBuddy upgrade for JDK 24 support
+    testImplementation 'org.mockito:mockito-core:5.17.0'
+    testImplementation 'net.bytebuddy:byte-buddy:1.17.5'
+    testImplementation 'net.bytebuddy:byte-buddy-agent:1.17.5'
+
+    // Integration Testing
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    integrationTestImplementation 'org.testcontainers:testcontainers:1.19.3'
+    integrationTestImplementation 'org.testcontainers:postgresql:1.19.3'
+    integrationTestImplementation 'org.testcontainers:mongodb:1.19.3'
+    integrationTestImplementation 'org.testcontainers:kafka:1.19.3'
+
+    // Gatling
+    gatling 'io.gatling.highcharts:gatling-charts-highcharts:3.10.1'
+
+    // Functional Testing — WireMock + RestAssured
+    functionalTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    functionalTestImplementation 'com.github.tomakehurst:wiremock-standalone:3.0.1'
+    functionalTestImplementation 'io.rest-assured:rest-assured:5.4.0'
+    functionalTestImplementation 'io.rest-assured:json-path:5.4.0'
+    functionalTestImplementation 'io.rest-assured:json-schema-validator:5.4.0'
+    functionalTestImplementation 'org.awaitility:awaitility:4.2.1'
+    functionalTestImplementation 'org.assertj:assertj-core:3.25.3'
+}
+
+tasks.register('integrationTest', Test) {
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    shouldRunAfter test
+}
+
+// Prevent duplicate resources from being flagged as errors
+tasks.named('processFunctionalTestResources', ProcessResources) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.register('functionalTest', Test) {
+    description = 'Runs post-deployment functional tests using WireMock'
+    group = 'verification'
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.functionalTest.output.classesDirs
+    classpath = sourceSets.functionalTest.runtimeClasspath
+    shouldRunAfter integrationTest
+    // Allow overriding target URL: ./gradlew functionalTest -PbaseUrl=https://your-host
+    systemProperty 'functional.baseUrl', project.findProperty('baseUrl') ?: 'http://localhost:8080'
+    systemProperty 'functional.wiremock.port', project.findProperty('wiremockPort') ?: '8089'
+    jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+            '--add-opens', 'java.base/java.util=ALL-UNNAMED'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    jvmArgs '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+            '--add-opens', 'java.base/java.lang.reflect=ALL-UNNAMED',
+            '--add-opens', 'java.base/java.util=ALL-UNNAMED'
+}
+
+tasks.named('bootBuildImage') {
+    builder = 'paketobuildpacks/builder:full'
+    environment = ['BP_JVM_VERSION': '21']
+}
