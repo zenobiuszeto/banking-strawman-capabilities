@@ -1,0 +1,188 @@
+name: CD — Deploy to Kubernetes
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        default: staging
+        type: choice
+        options: [ staging, production ]
+      image-tag:
+        description: Docker image tag to deploy
+        required: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  K8S_NAMESPACE: banking
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # 1. Deploy to Staging
+  # ─────────────────────────────────────────────────────────────
+  deploy-staging:
+    name: Deploy → Staging
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.bankingplatform.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: tag
+        run: |
+          TAG="${{ github.event.inputs.image-tag }}"
+          if [ -z "$TAG" ]; then
+            TAG="sha-${{ github.sha }}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig (EKS)
+        run: |
+          aws eks update-kubeconfig \
+            --name banking-platform-staging \
+            --region ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to staging
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}"
+          kubectl set image deployment/banking-platform \
+            banking-platform=$IMAGE \
+            -n ${{ env.K8S_NAMESPACE }} \
+            --record
+
+          kubectl rollout status deployment/banking-platform \
+            -n ${{ env.K8S_NAMESPACE }} \
+            --timeout=300s
+
+      - name: Run smoke test
+        run: |
+          STAGING_URL="https://staging.bankingplatform.com"
+          echo "Testing health endpoint..."
+          curl -f "$STAGING_URL/api/actuator/health" | jq '.status'
+          echo "Testing readiness endpoint..."
+          curl -f "$STAGING_URL/api/actuator/health/readiness" | jq '.status'
+
+      - name: Run Gatling smoke test
+        run: |
+          ./gradlew gatlingRun \
+            -Dgatling.baseUrl=https://staging.bankingplatform.com \
+            -Dgatling.simulation=simulations.SmokeTestSimulation \
+            --no-daemon
+
+      - name: Upload Gatling report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gatling-staging-report
+          path: build/reports/gatling/
+
+  # ─────────────────────────────────────────────────────────────
+  # 2. Manual approval gate
+  # ─────────────────────────────────────────────────────────────
+  approve-production:
+    name: Approve Production Deploy
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment:
+      name: production-approval   # requires manual reviewer in GitHub settings
+    steps:
+      - name: Approval received
+        run: echo "Production deployment approved by ${{ github.actor }}"
+
+  # ─────────────────────────────────────────────────────────────
+  # 3. Deploy to Production
+  # ─────────────────────────────────────────────────────────────
+  deploy-production:
+    name: Deploy → Production
+    runs-on: ubuntu-latest
+    needs: approve-production
+    environment:
+      name: production
+      url: https://api.bankingplatform.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set image tag
+        id: tag
+        run: |
+          TAG="${{ github.event.inputs.image-tag }}"
+          if [ -z "$TAG" ]; then
+            TAG="sha-${{ github.sha }}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Update kubeconfig (EKS — prod)
+        run: |
+          aws eks update-kubeconfig \
+            --name banking-platform-production \
+            --region ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to production (rolling update)
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}"
+          kubectl set image deployment/banking-platform \
+            banking-platform=$IMAGE \
+            -n ${{ env.K8S_NAMESPACE }}
+
+          kubectl rollout status deployment/banking-platform \
+            -n ${{ env.K8S_NAMESPACE }} \
+            --timeout=600s
+
+      - name: Production smoke test
+        id: smoke
+        run: |
+          PROD_URL="https://api.bankingplatform.com"
+          curl -f "$PROD_URL/api/actuator/health" | jq '.status'
+          curl -f "$PROD_URL/api/actuator/health/readiness" | jq '.status'
+
+      - name: Rollback on failure
+        if: failure() && steps.smoke.outcome == 'failure'
+        run: |
+          echo "Smoke test failed — rolling back..."
+          kubectl rollout undo deployment/banking-platform \
+            -n ${{ env.K8S_NAMESPACE }}
+          kubectl rollout status deployment/banking-platform \
+            -n ${{ env.K8S_NAMESPACE }} \
+            --timeout=300s
+
+      - name: Notify Slack on success
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "✅ Banking Platform deployed to production — ${{ steps.tag.outputs.tag }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🚨 Banking Platform production deploy FAILED — ${{ steps.tag.outputs.tag }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

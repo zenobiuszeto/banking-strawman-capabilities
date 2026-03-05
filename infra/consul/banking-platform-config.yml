@@ -1,0 +1,60 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Consul KV Configuration for banking-platform
+# Path: config/banking-platform/data
+# Loaded by Spring Cloud Consul Config at startup and on hot-refresh.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# --- Wire Transfer Limits ---
+banking:
+  wire:
+    daily-limit: 50000
+    international-fee: 45.00
+    domestic-fee: 25.00
+    high-value-threshold: 10000      # triggers compliance review via Temporal
+
+  ach:
+    batch-size: 500
+    same-day-cutoff: "14:30"         # 2:30 PM Eastern
+    max-daily-origination: 250000
+
+  rewards:
+    tier:
+      silver-threshold: 1000
+      gold-threshold: 5000
+      platinum-threshold: 20000
+    multipliers:
+      bronze: 1.0
+      silver: 1.25
+      gold: 1.5
+      platinum: 2.0
+
+  rate-limits:
+    api-per-second: 100
+    wire-per-day: 10
+    ach-per-day: 25
+
+  features:
+    new-rewards-engine: false        # feature flag — flip to true to enable
+    async-report-generation: true
+    webhook-delivery-enabled: true
+    temporal-wire-workflow: true     # use Temporal for wire approval saga
+    virtual-threads-enabled: true
+
+  batch:
+    eod-settlement-cron: "0 0 0 * * ?"
+    interest-accrual-cron: "0 0 1 * * ?"
+    reward-tier-review-cron: "0 0 2 1 * ?"
+
+  resilience:
+    circuit-breaker:
+      payment-rails:
+        failure-rate-threshold: 50
+        wait-duration-seconds: 30
+    retry:
+      payment-rails:
+        max-attempts: 3
+
+  kafka:
+    consumer:
+      concurrency: 3
+      max-poll-records: 500

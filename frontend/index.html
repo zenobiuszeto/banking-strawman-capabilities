@@ -1,0 +1,2231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Amex® Personal Banking</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black:       #000000;
+    --s1:          #0a0a0a;
+    --s2:          #141414;
+    --s3:          #1c1c1e;
+    --s4:          #2c2c2e;
+    --s5:          #3a3a3c;
+    --mid:         #636366;
+    --label2:      #8e8e93;
+    --label3:      #aeaeb2;
+    --bg:          #f5f5f7;
+    --surface:     #ffffff;
+    --dark-text:   #1d1d1f;
+    --dark-text2:  #6e6e73;
+    --blue:        #006FCF;
+    --blue-h:      #0077C0;
+    --amex-navy:   #003087;
+    --amex-gold:   #B5A054;
+    --amex-gold-h: #C8B572;
+    --green:       #30d158;
+    --orange:      #ff9f0a;
+    --red:         #ff375f;
+    --glass:       rgba(255,255,255,0.06);
+    --glass-b:     rgba(255,255,255,0.10);
+    --ease:        cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  html, body, #root { height: 100%; }
+
+  body {
+    font-family: -apple-system, 'SF Pro Display', 'SF Pro Text',
+                 BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    background: var(--black);
+    color: #fff;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--s5); border-radius: 99px; }
+
+  /* ── Glass card ── */
+  .glass {
+    background: var(--glass);
+    border: 1px solid var(--glass-b);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+  .glass-light {
+    background: rgba(255,255,255,0.92);
+    border: 1px solid rgba(0,0,0,0.06);
+    backdrop-filter: blur(24px);
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 240px;
+    background: rgba(10,10,10,0.85);
+    border-right: 1px solid rgba(255,255,255,0.06);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    flex-shrink: 0;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 14px; border-radius: 10px;
+    font-size: 13.5px; font-weight: 500; letter-spacing: -0.01em;
+    color: var(--label2); cursor: pointer;
+    transition: all 0.2s var(--ease);
+    border: 1px solid transparent;
+  }
+  .nav-item:hover  { color: #fff; background: rgba(255,255,255,0.07); }
+  .nav-item.active {
+    color: #fff;
+    background: rgba(255,255,255,0.10);
+    border-color: rgba(255,255,255,0.08);
+  }
+
+  /* ── Apple-style button ── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    font-size: 14px; font-weight: 500; letter-spacing: -0.01em;
+    border-radius: 980px; padding: 9px 20px;
+    cursor: pointer; transition: all 0.2s var(--ease);
+    border: none; outline: none; white-space: nowrap;
+  }
+  .btn-primary  { background: var(--blue); color: #fff; }
+  .btn-primary:hover  { background: var(--blue-h); }
+  .btn-dark     { background: var(--s3); color: #fff; border: 1px solid var(--s5); }
+  .btn-dark:hover { background: var(--s4); }
+  .btn-white    { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.14); }
+  .btn-white:hover { background: rgba(255,255,255,0.18); }
+  .btn-outline  { background: transparent; color: var(--blue); border: 1.5px solid var(--blue); }
+  .btn-outline:hover { background: rgba(0,113,227,0.08); }
+  .btn-danger   { background: var(--red); color: #fff; }
+  .btn-success  { background: var(--green); color: var(--black); }
+  .btn-light    { background: rgba(0,0,0,0.06); color: var(--dark-text); }
+  .btn-light:hover { background: rgba(0,0,0,0.10); }
+  .btn-sm  { font-size: 13px; padding: 6px 14px; }
+  .btn-lg  { font-size: 16px; padding: 13px 28px; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  /* ── Light surface card ── */
+  .card-light {
+    background: var(--surface);
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 18px;
+  }
+
+  /* ── Dark surface card ── */
+  .card-dark {
+    background: var(--s2);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 18px;
+  }
+
+  /* ── Input ── */
+  .inp {
+    width: 100%; padding: 11px 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 10px; color: #fff;
+    font-size: 14px; font-family: inherit;
+    transition: border-color 0.2s; outline: none;
+  }
+  .inp::placeholder { color: var(--label2); }
+  .inp:focus { border-color: var(--blue); background: rgba(255,255,255,0.08); }
+  .inp-light {
+    background: #f5f5f7; border: 1.5px solid rgba(0,0,0,0.10);
+    color: var(--dark-text);
+  }
+  .inp-light::placeholder { color: var(--dark-text2); }
+  .inp-light:focus { border-color: var(--blue); background: #fff; }
+  select.inp, select.inp-light { -webkit-appearance: none; appearance: none; }
+
+  /* ── Label ── */
+  .lbl { font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+         text-transform: uppercase; color: var(--label2); margin-bottom: 6px; }
+  .lbl-dark { color: var(--dark-text2); }
+
+  /* ── Badge ── */
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 3px 9px; border-radius: 99px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
+  }
+
+  /* ── Toggle ── */
+  .toggle {
+    width: 38px; height: 22px; border-radius: 99px;
+    position: relative; cursor: pointer;
+    transition: background 0.25s var(--ease);
+  }
+  .toggle-thumb {
+    position: absolute; top: 2px; width: 18px; height: 18px;
+    border-radius: 99px; background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+    transition: left 0.25s var(--ease);
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .fade-up  { animation: fadeUp  0.4s var(--ease) both; }
+  .fade-in  { animation: fadeIn  0.3s var(--ease) both; }
+  .spin     { animation: spin 0.8s linear infinite; }
+
+  /* ── Balance hero number ── */
+  .hero-balance {
+    font-size: clamp(48px, 7vw, 80px);
+    font-weight: 700; letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .display-xl {
+    font-size: clamp(36px, 5vw, 56px);
+    font-weight: 700; letter-spacing: -0.03em; line-height: 1.05;
+  }
+
+  /* ── Debit card ── */
+  .debit-card {
+    border-radius: 20px; padding: 28px;
+    background: linear-gradient(135deg, #003087 0%, #006FCF 100%);
+    border: 1px solid rgba(255,255,255,0.14);
+    position: relative; overflow: hidden;
+    box-shadow: 0 16px 48px rgba(0,48,135,0.50);
+  }
+  .debit-card::before {
+    content: ''; position: absolute;
+    width: 220px; height: 220px; border-radius: 99px;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+    top: -60px; right: -60px;
+  }
+  .debit-card::after {
+    content: ''; position: absolute;
+    width: 260px; height: 260px; border-radius: 99px;
+    background: radial-gradient(circle, rgba(0,48,135,0.6) 0%, transparent 70%);
+    bottom: -80px; left: -60px;
+  }
+
+  /* ── Progress bar ── */
+  .prog-track { height: 4px; background: rgba(255,255,255,0.10); border-radius: 99px; overflow: hidden; }
+  .prog-track-light { height: 4px; background: rgba(0,0,0,0.08); border-radius: 99px; overflow: hidden; }
+  .prog-fill  { height: 100%; border-radius: 99px; transition: width 0.6s var(--ease); }
+
+  /* ── Stat card ── */
+  .stat-value { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; color: inherit; }
+
+  /* ── Table ── */
+  .tbl { width: 100%; border-collapse: collapse; }
+  .tbl th { padding: 10px 16px; font-size: 11px; font-weight: 600;
+            letter-spacing: 0.05em; text-transform: uppercase;
+            color: var(--label2); text-align: left; }
+  .tbl td { padding: 13px 16px; font-size: 13.5px; }
+  .tbl-dark tr { border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .tbl-dark tr:last-child { border-bottom: none; }
+  .tbl-dark tr:hover td { background: rgba(255,255,255,0.03); }
+  .tbl-light tr { border-bottom: 1px solid rgba(0,0,0,0.05); }
+  .tbl-light tr:last-child { border-bottom: none; }
+  .tbl-light tr:hover td { background: rgba(0,0,0,0.02); }
+
+  /* ── Step indicator ── */
+  .step-dot {
+    width: 28px; height: 28px; border-radius: 99px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; transition: all 0.3s;
+  }
+  .step-line { flex: 1; height: 1px; }
+
+  /* ── Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    animation: fadeIn 0.2s var(--ease);
+  }
+  .modal-box {
+    background: var(--s2); border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 20px; width: 100%; max-width: 500px;
+    max-height: 88vh; overflow-y: auto;
+    animation: fadeUp 0.3s var(--ease);
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed; bottom: 28px; right: 28px; z-index: 200;
+    padding: 14px 20px; border-radius: 14px;
+    font-size: 14px; font-weight: 500;
+    display: flex; align-items: center; gap: 10px;
+    min-width: 260px; max-width: 380px;
+    animation: fadeUp 0.35s var(--ease);
+    backdrop-filter: blur(20px);
+  }
+  .toast-success { background: rgba(48,209,88,0.18); border: 1px solid rgba(48,209,88,0.28); color: #30d158; }
+  .toast-error   { background: rgba(255,55,95,0.18);  border: 1px solid rgba(255,55,95,0.28);  color: #ff6b8a; }
+  .toast-info    { background: rgba(0,113,227,0.18);  border: 1px solid rgba(0,113,227,0.28);  color: #63b3ff; }
+
+  /* Segment control */
+  .seg { display: flex; background: rgba(255,255,255,0.07); border-radius: 10px; padding: 3px; gap: 2px; }
+  .seg-item {
+    flex: 1; text-align: center; padding: 7px 12px;
+    border-radius: 8px; font-size: 13px; font-weight: 500;
+    cursor: pointer; color: var(--label2); transition: all 0.2s;
+  }
+  .seg-item.active { background: rgba(255,255,255,0.12); color: #fff; }
+
+  .seg-light { background: rgba(0,0,0,0.06); }
+  .seg-item-light { color: var(--dark-text2); }
+  .seg-item-light.active { background: #fff; color: var(--dark-text); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+
+  /* ── Light Theme overrides ── */
+  [data-theme="light"] {
+    --black:   #f5f5f7;
+    --s1:      #f2f2f7;
+    --s2:      #ffffff;
+    --s3:      #f0f0f5;
+    --s4:      #e8e8ed;
+    --s5:      #d1d1d6;
+    --mid:     #8e8e93;
+    --label2:  #6e6e73;
+    --label3:  #8e8e93;
+    --glass:   rgba(255,255,255,0.82);
+    --glass-b: rgba(0,0,0,0.08);
+  }
+  [data-theme="light"] body    { background: #f2f2f7; color: #1d1d1f; }
+  [data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); }
+
+  [data-theme="light"] .sidebar {
+    background: rgba(255,255,255,0.94);
+    border-right: 1px solid rgba(0,0,0,0.09);
+  }
+  [data-theme="light"] .nav-item              { color: #6e6e73; }
+  [data-theme="light"] .nav-item:hover        { color: #1d1d1f; background: rgba(0,0,0,0.05); }
+  [data-theme="light"] .nav-item.active       { color: var(--blue); background: rgba(0,113,227,0.09); border-color: rgba(0,113,227,0.18); }
+
+  [data-theme="light"] .card-dark             { background: #ffffff; border: 1px solid rgba(0,0,0,0.08); }
+  [data-theme="light"] .glass                 { background: rgba(255,255,255,0.80); border-color: rgba(0,0,0,0.07); }
+
+  [data-theme="light"] .inp                   { background: #f0f0f5; border-color: rgba(0,0,0,0.12); color: #1d1d1f; }
+  [data-theme="light"] .inp::placeholder      { color: #8e8e93; }
+  [data-theme="light"] .inp:focus             { border-color: var(--blue); background: #fff; }
+
+  [data-theme="light"] .lbl                   { color: #8e8e93; }
+  [data-theme="light"] .tbl th                { color: #8e8e93; }
+  [data-theme="light"] .tbl td               { color: #1d1d1f; }
+  [data-theme="light"] .tbl-dark tr          { border-bottom: 1px solid rgba(0,0,0,0.06); }
+  [data-theme="light"] .tbl-dark tr:hover td { background: rgba(0,0,0,0.025); }
+
+  [data-theme="light"] .seg                   { background: rgba(0,0,0,0.06); }
+  [data-theme="light"] .seg-item              { color: #6e6e73; }
+  [data-theme="light"] .seg-item.active       { background: #fff; color: #1d1d1f; box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+
+  [data-theme="light"] .modal-box             { background: #ffffff; border-color: rgba(0,0,0,0.10); color: #1d1d1f; }
+  [data-theme="light"] .modal-overlay        { background: rgba(0,0,0,0.45); }
+
+  [data-theme="light"] .prog-track           { background: rgba(0,0,0,0.08); }
+
+  [data-theme="light"] .btn-dark             { background: #e8e8ed; color: #1d1d1f; border-color: rgba(0,0,0,0.10); }
+  [data-theme="light"] .btn-dark:hover       { background: #d1d1d6; }
+  [data-theme="light"] .btn-white            { background: rgba(255,255,255,0.70); color: #1d1d1f; border-color: rgba(0,0,0,0.12); }
+  [data-theme="light"] .btn-white:hover      { background: rgba(255,255,255,0.90); }
+
+  [data-theme="light"] .toast-success        { background: rgba(48,209,88,0.12); border-color: rgba(48,209,88,0.28); color: #1a8c40; }
+  [data-theme="light"] .toast-error          { background: rgba(255,55,95,0.10); border-color: rgba(255,55,95,0.22); color: #c01230; }
+  [data-theme="light"] .toast-info           { background: rgba(0,113,227,0.10); border-color: rgba(0,113,227,0.22); color: #0056b3; }
+
+  [data-theme="light"] .debit-card           { background: linear-gradient(135deg,#003087 0%,#006FCF 100%); box-shadow: 0 16px 48px rgba(0,48,135,0.35); }
+  [data-theme="light"] .hero-balance         { color: #1d1d1f; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, createContext, useContext, useRef } = React;
+
+/* ─── CONFIG ─────────────────────────────────────────────────── */
+const API_BASE = 'http://localhost:8080/api/v1';
+let DEMO_MODE = true;
+
+/* ─── MOCK DATA ──────────────────────────────────────────────── */
+const MOCK = {
+  customer: { id:'cust-001', firstName:'Alex', lastName:'Rivera', email:'alex.rivera@email.com' },
+  account:  { id:'acct-001', customerId:'cust-001', accountNumber:'****4892', accountType:'CHECKING',
+               status:'ACTIVE', currentBalance:12450.75, availableBalance:11950.75, pendingBalance:500.00 },
+  debitCard:{ id:'card-001', cardNumber:'**** **** **** 7823', status:'ACTIVE',
+               expiryDate:'03/27', dailyLimit:2000, monthlyLimit:10000, dailySpent:345.50, monthlySpent:1820.00 },
+  transactions:[
+    {id:'t1',type:'DEBIT', category:'POS_PURCHASE',   amount:45.99,  description:'Whole Foods Market',   status:'POSTED', referenceNumber:'TXN-2025-001', createdAt:'2025-02-27T14:22:00Z'},
+    {id:'t2',type:'CREDIT',category:'DIRECT_DEPOSIT', amount:3200.00,description:'Payroll — Acme Corp',  status:'POSTED', referenceNumber:'TXN-2025-002', createdAt:'2025-02-27T08:00:00Z'},
+    {id:'t3',type:'DEBIT', category:'ATM_WITHDRAWAL', amount:200.00, description:'ATM Withdrawal',       status:'POSTED', referenceNumber:'TXN-2025-003', createdAt:'2025-02-26T18:30:00Z'},
+    {id:'t4',type:'DEBIT', category:'ONLINE_PURCHASE', amount:129.00,description:'Amazon.com',           status:'POSTED', referenceNumber:'TXN-2025-004', createdAt:'2025-02-25T11:15:00Z'},
+    {id:'t5',type:'DEBIT', category:'BILL_PAYMENT',   amount:85.00,  description:'Electric — ConEd',     status:'POSTED', referenceNumber:'TXN-2025-005', createdAt:'2025-02-24T09:00:00Z'},
+    {id:'t6',type:'CREDIT',category:'TRANSFER_IN',    amount:500.00, description:'Transfer from Savings',status:'POSTED', referenceNumber:'TXN-2025-006', createdAt:'2025-02-23T16:45:00Z'},
+    {id:'t7',type:'DEBIT', category:'POS_PURCHASE',   amount:23.50,  description:'Starbucks #4421',      status:'POSTED', referenceNumber:'TXN-2025-007', createdAt:'2025-02-22T07:30:00Z'},
+    {id:'t8',type:'DEBIT', category:'POS_PURCHASE',   amount:67.80,  description:'Shell Gas Station',    status:'POSTED', referenceNumber:'TXN-2025-008', createdAt:'2025-02-21T15:20:00Z'},
+  ],
+  applications:[
+    {id:'app-001',firstName:'Jordan',lastName:'Lee',   email:'jordan.lee@email.com',  status:'KYC_PENDING',accountType:'CHECKING',submittedAt:'2025-02-28T09:00:00Z'},
+    {id:'app-002',firstName:'Morgan',lastName:'Kim',   email:'morgan.kim@email.com',  status:'SUBMITTED',  accountType:'SAVINGS', submittedAt:'2025-02-27T14:00:00Z'},
+    {id:'app-003',firstName:'Sam',   lastName:'Patel', email:'sam.patel@email.com',   status:'APPROVED',   accountType:'CHECKING',submittedAt:'2025-02-26T10:30:00Z'},
+  ],
+  glAccounts:[
+    {id:'gl-1',code:'1000',name:'Cash & Cash Equivalents',type:'ASSET',    normalBalance:'DEBIT', balance:15420830.00},
+    {id:'gl-2',code:'1100',name:'Customer Deposits',      type:'LIABILITY', normalBalance:'CREDIT',balance:14890200.00},
+    {id:'gl-3',code:'4000',name:'Interest Income',        type:'REVENUE',   normalBalance:'CREDIT',balance:185430.00},
+    {id:'gl-4',code:'4100',name:'Fee Income',             type:'REVENUE',   normalBalance:'CREDIT',balance:42800.00},
+    {id:'gl-5',code:'5000',name:'Operating Expenses',     type:'EXPENSE',   normalBalance:'DEBIT', balance:234100.00},
+  ],
+  journalEntries:[
+    {id:'je-1',entryNumber:'JE-2025-00001',description:'ACH Payroll Credit — Acme Corp Batch',      status:'POSTED',totalDebits:3200.00, totalCredits:3200.00, postedAt:'2025-02-27T08:00:00Z'},
+    {id:'je-2',entryNumber:'JE-2025-00002',description:'POS Settlement Batch — Visa Network',       status:'POSTED',totalDebits:460.79,  totalCredits:460.79,  postedAt:'2025-02-27T00:01:00Z'},
+    {id:'je-3',entryNumber:'JE-2025-00003',description:'Wire Transfer Fee — WIRE-20250226-A4F2',   status:'POSTED',totalDebits:25.00,   totalCredits:25.00,   postedAt:'2025-02-26T15:30:00Z'},
+  ],
+  allCustomers:[
+    {id:'cust-001',firstName:'Alex',  lastName:'Rivera',email:'alex.rivera@email.com', accountId:'acct-001',balance:12450.75,status:'ACTIVE'},
+    {id:'cust-002',firstName:'Chris', lastName:'Wong',  email:'chris.wong@email.com',  accountId:'acct-002',balance:8320.00, status:'ACTIVE'},
+    {id:'cust-003',firstName:'Taylor',lastName:'Osei',  email:'taylor.osei@email.com', accountId:'acct-003',balance:34100.50,status:'ACTIVE'},
+  ],
+  savingsAccount: {
+    id:'acct-sav-001', customerId:'cust-001', accountNumber:'****5501',
+    accountType:'HIGH_YIELD_SAVINGS', status:'ACTIVE',
+    currentBalance: 8200.00, availableBalance: 8200.00,
+    apy: 4.25,
+    interestEarnedMTD: 29.05,
+    interestEarnedYTD: 58.10,
+    interestRate: 4.17,
+  },
+  rewards: {
+    points: 47820,
+    cashbackMTD: 42.50,
+    pendingPoints: 1250,
+    tier: 'Gold Card Member',
+    memberSince: '2019',
+    cashbackRate: 1.5,
+    bonusCategory: 'Groceries & Dining · 3%',
+  },
+};
+
+/* ─── API CLIENT ─────────────────────────────────────────────── */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const api = {
+  async getAccount(id)    { if(DEMO_MODE){await sleep(300);return{...MOCK.account};} return fetch(`${API_BASE}/accounts/${id}`).then(r=>r.json()); },
+  async getTransactions(accountId,page=0,size=20){ if(DEMO_MODE){await sleep(400);return{content:MOCK.transactions,totalElements:MOCK.transactions.length,totalPages:1,page};} return fetch(`${API_BASE}/transactions/account/${accountId}?page=${page}&size=${size}`).then(r=>r.json()); },
+  async searchTransactions(accountId,filters){ if(DEMO_MODE){let l=[...MOCK.transactions];if(filters.keyword)l=l.filter(t=>t.description?.toLowerCase().includes(filters.keyword.toLowerCase()));if(filters.type)l=l.filter(t=>t.type===filters.type);return{content:l,totalElements:l.length};} return fetch(`${API_BASE}/transactions/search`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accountId,...filters})}).then(r=>r.json()); },
+  async createTransaction(payload){ if(DEMO_MODE){await sleep(600);const tx={id:'tx-'+Date.now(),referenceNumber:'TXN-'+Date.now(),status:'POSTED',createdAt:new Date().toISOString(),...payload};MOCK.transactions.unshift(tx);if(payload.type==='DEBIT'){MOCK.account.currentBalance-=payload.amount;MOCK.account.availableBalance-=payload.amount;}else{MOCK.account.currentBalance+=payload.amount;MOCK.account.availableBalance+=payload.amount;}return tx;} return fetch(`${API_BASE}/transactions`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json()); },
+  async submitApplication(payload){ if(DEMO_MODE){await sleep(1200);return{id:'app-'+Date.now(),status:'SUBMITTED',...payload};} return fetch(`${API_BASE}/applications`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json()); },
+  async getDebitCard(cid) { if(DEMO_MODE){await sleep(300);return{...MOCK.debitCard};} return fetch(`${API_BASE}/debit-network/cards/customer/${cid}`).then(r=>r.json()).then(l=>l[0]); },
+  async authorizeDebit(payload){ if(DEMO_MODE){await sleep(900);if(payload.amount>MOCK.account.availableBalance)return{approved:false,declineReason:'INSUFFICIENT_FUNDS'};if(payload.amount>MOCK.debitCard.dailyLimit-MOCK.debitCard.dailySpent)return{approved:false,declineReason:'DAILY_LIMIT_EXCEEDED'};MOCK.debitCard.dailySpent+=payload.amount;MOCK.account.availableBalance-=payload.amount;const tx={id:'tx-'+Date.now(),type:'DEBIT',category:payload.transactionType,amount:payload.amount,description:payload.merchantName,status:'AUTHORIZED',createdAt:new Date().toISOString(),referenceNumber:'TXN-'+Date.now()};MOCK.transactions.unshift(tx);return{approved:true,transactionId:tx.id,authCode:'AUTH'+Math.random().toString(36).substring(2,8).toUpperCase()};} return fetch(`${API_BASE}/debit-network/authorize`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json()); },
+  async initiateAch(payload){ if(DEMO_MODE){await sleep(1000);const tx={id:'ach-'+Date.now(),type:'CREDIT',category:'ACH_TRANSFER',amount:payload.amount,description:'ACH Deposit',status:'INITIATED',createdAt:new Date().toISOString(),referenceNumber:'ACH-'+Date.now()};MOCK.transactions.unshift(tx);MOCK.account.currentBalance+=payload.amount;MOCK.account.availableBalance+=payload.amount;return{id:tx.id,status:'INITIATED'};} return fetch(`${API_BASE}/ach`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json()); },
+  async getGlAccounts()    { if(DEMO_MODE){await sleep(300);return MOCK.glAccounts;} return fetch(`${API_BASE}/ledger/accounts`).then(r=>r.json()).then(d=>d.content||d); },
+  async getJournalEntries(){ if(DEMO_MODE){await sleep(300);return{content:MOCK.journalEntries,totalElements:3};} return fetch(`${API_BASE}/ledger/journal-entries`).then(r=>r.json()); },
+  async getTrialBalance()  { if(DEMO_MODE){await sleep(300);return MOCK.glAccounts.map(a=>({account:a,debitTotal:a.normalBalance==='DEBIT'?a.balance:0,creditTotal:a.normalBalance==='CREDIT'?a.balance:0}));} return fetch(`${API_BASE}/ledger/trial-balance`).then(r=>r.json()); },
+  async getApplications(s) { if(DEMO_MODE){await sleep(300);return s?MOCK.applications.filter(a=>a.status===s):MOCK.applications;} return fetch(`${API_BASE}/applications?status=${s||''}`).then(r=>r.json()).then(d=>d.content||d); },
+  async updateApplicationStatus(id,status){ if(DEMO_MODE){await sleep(500);const a=MOCK.applications.find(x=>x.id===id);if(a)a.status=status;return a;} return fetch(`${API_BASE}/applications/${id}/status`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})}).then(r=>r.json()); },
+  async getAllCustomers()  { if(DEMO_MODE){await sleep(300);return MOCK.allCustomers;} return MOCK.allCustomers; },
+};
+
+/* ─── CONTEXT ────────────────────────────────────────────────── */
+const Ctx = createContext(null);
+const useApp = () => useContext(Ctx);
+
+/* ─── FORMATTERS ─────────────────────────────────────────────── */
+const fmt = n => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(n);
+const fmtDate = s => s ? new Date(s).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+
+/* ─── SHARED UI ──────────────────────────────────────────────── */
+function Spinner({ dark }) {
+  return (
+    <div style={{display:'flex',justifyContent:'center',alignItems:'center',padding:'60px 0'}}>
+      <div className="spin" style={{width:28,height:28,borderRadius:'50%',
+        border:`2.5px solid ${dark?'rgba(0,0,0,0.12)':'rgba(255,255,255,0.12)'}`,
+        borderTopColor: dark?'var(--dark-text)':'#fff'}}/>
+    </div>
+  );
+}
+
+function Toast({ message, type, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 4500); return () => clearTimeout(t); }, []);
+  const icons = { success:'✓', error:'✕', info:'ℹ' };
+  return (
+    <div className={`toast toast-${type}`}>
+      <span style={{fontWeight:700,fontSize:16}}>{icons[type]}</span>
+      <span style={{flex:1}}>{message}</span>
+      <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',opacity:.6,fontSize:18,color:'inherit'}}>×</button>
+    </div>
+  );
+}
+
+function Modal({ title, children, onClose, wide }) {
+  const { theme } = useApp();
+  const isLight = theme === 'light';
+  return (
+    <div className="modal-overlay" onClick={e => e.target===e.currentTarget&&onClose()}>
+      <div className="modal-box" style={{maxWidth: wide?660:480}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'22px 24px',borderBottom:`1px solid ${isLight?'rgba(0,0,0,0.08)':'rgba(255,255,255,0.07)'}`}}>
+          <span style={{fontSize:16,fontWeight:700,letterSpacing:'-0.02em'}}>{title}</span>
+          <button onClick={onClose} style={{width:30,height:30,borderRadius:'50%',background:isLight?'rgba(0,0,0,0.06)':'rgba(255,255,255,0.08)',border:'none',color:'var(--label2)',cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center'}}>×</button>
+        </div>
+        <div style={{padding:'24px'}}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
+function Field({ label, children, dark }) {
+  return (
+    <div style={{display:'flex',flexDirection:'column',gap:6}}>
+      <div className={`lbl ${dark?'lbl-dark':''}`}>{label}</div>
+      {children}
+    </div>
+  );
+}
+
+function TextInput({ value, onChange, placeholder, type='text', dark, hint }) {
+  return (
+    <div>
+      <input type={type} value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder}
+        className={dark?'inp inp-light':'inp'}
+        style={{width:'100%'}}/>
+      {hint && <div style={{fontSize:11,color:dark?'var(--dark-text2)':'var(--label2)',marginTop:4}}>{hint}</div>}
+    </div>
+  );
+}
+
+function SelectInput({ value, onChange, options, dark }) {
+  return (
+    <select value={value} onChange={e=>onChange(e.target.value)} className={dark?'inp inp-light':'inp'}>
+      <option value="">Select…</option>
+      {options.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  );
+}
+
+function Badge({ label, color='neutral' }) {
+  const { theme } = useApp();
+  const isLight = theme === 'light';
+  const styles = {
+    neutral:  {background:isLight?'rgba(0,0,0,0.07)':'rgba(255,255,255,0.08)', color:'var(--label3)'},
+    blue:     {background:'rgba(0,113,227,0.14)',   color:isLight?'#0056b3':'#63b3ff'},
+    green:    {background:'rgba(48,209,88,0.14)',   color:isLight?'#1a7a35':'var(--green)'},
+    orange:   {background:'rgba(255,159,10,0.14)',  color:isLight?'#b36b00':'var(--orange)'},
+    red:      {background:'rgba(255,55,95,0.14)',   color:isLight?'#b01030':'#ff6b8a'},
+    dark_green:{background:'rgba(48,209,88,0.12)',  color:'#22c55e'},
+    dark_blue: {background:'rgba(0,113,227,0.12)',  color:'#3b82f6'},
+    dark_orange:{background:'rgba(255,159,10,0.12)',color:'#f59e0b'},
+    dark_red:  {background:'rgba(239,68,68,0.12)',  color:'#ef4444'},
+  };
+  const s = styles[color] || styles.neutral;
+  return <span className="badge" style={s}>{label}</span>;
+}
+
+function txBadge(status) {
+  const m = {POSTED:'green',PENDING:'orange',REVERSED:'red',FAILED:'red',AUTHORIZED:'blue',SETTLED:'green'};
+  return <Badge label={status} color={m[status]||'neutral'}/>;
+}
+function appStatusBadge(s) {
+  const m = {SUBMITTED:'blue',KYC_PENDING:'orange',KYC_APPROVED:'green',APPROVED:'green',REJECTED:'red',ACCOUNT_CREATED:'blue'};
+  return <Badge label={s} color={m[s]||'neutral'}/>;
+}
+function appStatusBadgeDark(s) {
+  const m = {SUBMITTED:'dark_blue',KYC_PENDING:'dark_orange',KYC_APPROVED:'dark_green',APPROVED:'dark_green',REJECTED:'dark_red',ACCOUNT_CREATED:'dark_blue'};
+  return <Badge label={s} color={m[s]||'neutral'}/>;
+}
+
+/* ─── MINI BAR CHART ─────────────────────────────────────────── */
+function BarChart({ data, dark }) {
+  const max = Math.max(...data.map(d=>d.value), 1);
+  const barColor = dark ? 'rgba(0,113,227,0.7)' : 'rgba(0,113,227,0.7)';
+  return (
+    <div style={{display:'flex',alignItems:'flex-end',gap:6,height:64}}>
+      {data.map((d,i)=>(
+        <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+          <div title={`${d.label}: ${fmt(d.value)}`}
+            style={{width:'100%',background:barColor,borderRadius:'4px 4px 2px 2px',
+              height:`${Math.max(3,(d.value/max)*52)}px`,transition:'height 0.6s var(--ease)',
+              boxShadow: d.value>0?`0 0 8px rgba(0,113,227,0.3)`:undefined}}/>
+          <span style={{fontSize:10,color:dark?'var(--dark-text2)':'var(--label2)'}}>{d.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ─── LAYOUT ─────────────────────────────────────────────────── */
+const NAV_CUSTOMER = [
+  {id:'dashboard',   label:'Dashboard',    icon:'▦'},
+  {id:'transactions',label:'Transactions', icon:'≡'},
+  {id:'fund',        label:'Transfers',    icon:'⇌'},
+  {id:'atm',         label:'ATM / POS',    icon:'▣'},
+];
+const NAV_ADMIN = [
+  {id:'admin-dash',  label:'Overview',         icon:'◈'},
+  {id:'admin-ledger',label:'General Ledger',   icon:'≋'},
+  {id:'admin-cust',  label:'Customers',        icon:'◉'},
+  {id:'admin-apps',  label:'Applications',     icon:'◎'},
+];
+
+function Layout({ children }) {
+  const { role, page, setPage, setRole, session, toast, setToast, demoMode, toggleDemo, theme, toggleTheme } = useApp();
+  const nav = role === 'admin' ? NAV_ADMIN : NAV_CUSTOMER;
+  const isLight = theme === 'light';
+
+  return (
+    <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'var(--s1)'}}>
+      {/* Sidebar */}
+      <aside className="sidebar" style={{display:'flex',flexDirection:'column',height:'100%'}}>
+        {/* Logo */}
+        <div style={{padding:'24px 20px 16px',display:'flex',alignItems:'center',gap:12}}>
+          <div style={{width:38,height:38,borderRadius:11,background:'linear-gradient(135deg,var(--amex-navy) 0%,var(--blue) 100%)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0,border:'1px solid rgba(255,255,255,0.15)',boxShadow:'0 2px 12px rgba(0,48,135,0.40)'}}>
+            <div style={{fontWeight:900,fontSize:10,letterSpacing:'0.05em',color:'#fff',lineHeight:1}}>AMEX</div>
+          </div>
+          <div>
+            <div style={{fontSize:14,fontWeight:700,letterSpacing:'-0.02em',color:isLight?'#1d1d1f':'#fff'}}>Amex Banking</div>
+            <div style={{fontSize:11,color:'var(--label2)',marginTop:1}}>{role==='admin'?'CCP Ops Tool':'Personal Banking'}</div>
+          </div>
+        </div>
+
+        {/* Session pill */}
+        {session && (
+          <div style={{margin:'0 12px 16px',padding:'10px 12px',background:isLight?'rgba(0,0,0,0.04)':'rgba(255,255,255,0.05)',borderRadius:12,border:`1px solid ${isLight?'rgba(0,0,0,0.07)':'rgba(255,255,255,0.07)'}`}}>
+            <div style={{fontSize:12,color:'var(--label2)',marginBottom:2}}>{role==='admin'?'Ops Agent':'Account Holder'}</div>
+            <div style={{fontSize:13,fontWeight:600,letterSpacing:'-0.01em',color:isLight?'#1d1d1f':'#fff'}}>{session.name}</div>
+            {session.accountNumber && <div style={{fontSize:11,color:'var(--label2)',marginTop:1}}>Acct {session.accountNumber}</div>}
+          </div>
+        )}
+
+        {/* Nav */}
+        <nav style={{flex:1,padding:'0 10px',display:'flex',flexDirection:'column',gap:2}}>
+          {nav.map(n=>(
+            <div key={n.id} className={`nav-item${page===n.id?' active':''}`} onClick={()=>setPage(n.id)}>
+              <span style={{fontSize:14,width:18,textAlign:'center',flexShrink:0}}>{n.icon}</span>
+              <span>{n.label}</span>
+            </div>
+          ))}
+        </nav>
+
+        {/* Bottom controls */}
+        <div style={{padding:'16px 12px',borderTop:`1px solid ${isLight?'rgba(0,0,0,0.07)':'rgba(255,255,255,0.06)'}`,display:'flex',flexDirection:'column',gap:10}}>
+          {/* Theme toggle */}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 10px'}}>
+            <span style={{fontSize:12,color:'var(--label2)',display:'flex',alignItems:'center',gap:5}}>
+              <span style={{fontSize:14}}>{isLight?'☀':'🌙'}</span> {isLight?'Light Mode':'Dark Mode'}
+            </span>
+            <div className="toggle" style={{background:isLight?'var(--blue)':'var(--s5)'}} onClick={toggleTheme}>
+              <div className="toggle-thumb" style={{left:isLight?'18px':'2px'}}/>
+            </div>
+          </div>
+          {/* Demo toggle */}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 10px'}}>
+            <span style={{fontSize:12,color:'var(--label2)'}}>Demo Mode</span>
+            <div className="toggle" style={{background:demoMode?'var(--green)':'var(--s5)'}} onClick={toggleDemo}>
+              <div className="toggle-thumb" style={{left:demoMode?'18px':'2px'}}/>
+            </div>
+          </div>
+          {/* Role switch */}
+          <button className="btn btn-dark btn-sm" style={{width:'100%',borderRadius:10}}
+            onClick={()=>{setRole(null);setPage(null);}}>⬅ Switch Role</button>
+        </div>
+      </aside>
+
+      {/* Content */}
+      <main style={{flex:1,overflowY:'auto',background:'var(--s1)'}}>
+        <div className="fade-in">{children}</div>
+      </main>
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={()=>setToast(null)}/>}
+    </div>
+  );
+}
+
+/* ─── LOGIN ──────────────────────────────────────────────────── */
+function LoginPage() {
+  const { setRole, setPage, setSession, theme, toggleTheme } = useApp();
+  const isLight = theme === 'light';
+  const pickCustomer = () => {
+    setSession({name:'Alex Rivera', accountNumber:'****4892', customerId:'cust-001', accountId:'acct-001'});
+    setRole('customer'); setPage('dashboard');
+  };
+  const pickAdmin = () => {
+    setSession({name:'Riley Chen', customerId:null, accountId:null});
+    setRole('admin'); setPage('admin-dash');
+  };
+
+  const cardBg     = isLight ? 'rgba(0,0,0,0.04)'  : 'rgba(255,255,255,0.04)';
+  const cardBorder = isLight ? 'rgba(0,0,0,0.08)'  : 'rgba(255,255,255,0.08)';
+  const cardHoverBg     = isLight ? 'rgba(0,0,0,0.07)'  : 'rgba(255,255,255,0.07)';
+  const cardHoverBorder = isLight ? 'rgba(0,0,0,0.14)'  : 'rgba(255,255,255,0.14)';
+  const headingColor = isLight ? '#1d1d1f' : '#fff';
+  const footerColor  = isLight ? '#aeaeb2' : 'var(--s5)';
+
+  return (
+    <div style={{minHeight:'100vh',background:'var(--black)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:32,position:'relative'}}>
+      {/* Theme toggle top-right */}
+      <button onClick={toggleTheme}
+        style={{position:'absolute',top:24,right:24,width:40,height:40,borderRadius:'50%',
+          background:isLight?'rgba(0,0,0,0.06)':'rgba(255,255,255,0.08)',
+          border:`1px solid ${isLight?'rgba(0,0,0,0.10)':'rgba(255,255,255,0.12)'}`,
+          cursor:'pointer',fontSize:18,display:'flex',alignItems:'center',justifyContent:'center',
+          color:isLight?'#1d1d1f':'#fff',transition:'all 0.2s var(--ease)'}}
+        title="Toggle theme">
+        {isLight ? '☀' : '🌙'}
+      </button>
+
+      {/* Brand */}
+      <div className="fade-up" style={{textAlign:'center',marginBottom:60}}>
+        {/* AmEx-style logo */}
+        <div style={{width:80,height:80,borderRadius:22,background:'linear-gradient(135deg,var(--amex-navy) 0%,var(--blue) 100%)',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',margin:'0 auto 28px',boxShadow:'0 0 48px rgba(0,48,135,0.50)',border:'1px solid rgba(255,255,255,0.15)'}}>
+          <div style={{fontWeight:900,fontSize:18,letterSpacing:'0.04em',color:'#fff',lineHeight:1}}>AMEX</div>
+          <div style={{width:36,height:1.5,background:'rgba(255,255,255,0.30)',margin:'4px 0'}}/>
+          <div style={{fontSize:8,letterSpacing:'0.12em',color:'rgba(255,255,255,0.60)',fontWeight:700}}>BANKING</div>
+        </div>
+        <h1 style={{fontSize:'clamp(32px,5vw,48px)',fontWeight:700,letterSpacing:'-0.04em',color:headingColor,lineHeight:1.05}}>American Express<sup style={{fontSize:'0.45em',verticalAlign:'super'}}>®</sup> Banking</h1>
+        <p style={{color:'var(--label2)',fontSize:17,marginTop:12,letterSpacing:'-0.01em'}}>Checking &amp; High Yield Savings — no fees, no minimums.</p>
+      </div>
+
+      {/* Role cards */}
+      <div className="fade-up" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,width:'100%',maxWidth:560,animationDelay:'0.1s'}}>
+        {[
+          {fn:pickCustomer, icon:'◉', title:'Customer Portal', sub:'Dashboard · Savings · Transfers · ATM / POS', accent:'var(--blue)'},
+          {fn:pickAdmin,    icon:'◈', title:'CCP Ops Tool',    sub:'General Ledger · Customer Accounts · Applications', accent:'#a78bfa'},
+        ].map(r=>(
+          <div key={r.title} onClick={r.fn}
+            style={{padding:'28px 24px',borderRadius:20,background:cardBg,border:`1px solid ${cardBorder}`,
+              cursor:'pointer',transition:'all 0.25s var(--ease)',display:'flex',flexDirection:'column',gap:14}}
+            onMouseEnter={e=>{e.currentTarget.style.background=cardHoverBg;e.currentTarget.style.borderColor=cardHoverBorder;e.currentTarget.style.transform='translateY(-2px)';}}
+            onMouseLeave={e=>{e.currentTarget.style.background=cardBg;e.currentTarget.style.borderColor=cardBorder;e.currentTarget.style.transform='translateY(0)';}}>
+            <div style={{width:44,height:44,borderRadius:14,background:`${r.accent}22`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,color:r.accent}}>{r.icon}</div>
+            <div>
+              <div style={{fontWeight:700,fontSize:16,letterSpacing:'-0.02em',color:headingColor}}>{r.title}</div>
+              <div style={{fontSize:12,color:'var(--label2)',marginTop:5,lineHeight:1.5}}>{r.sub}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p className="fade-up" style={{marginTop:40,fontSize:12,color:footerColor,animationDelay:'0.2s'}}>
+        Demo mode enabled — no backend required
+      </p>
+    </div>
+  );
+}
+
+/* ─── ONBOARDING ─────────────────────────────────────────────── */
+function OnboardingPage() {
+  const { setPage, showToast, theme } = useApp();
+  const isLight = theme === 'light';
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(null);
+  const [f, setF] = useState({firstName:'',lastName:'',email:'',dateOfBirth:'',phone:'',ssn:'',street:'',city:'',state:'',zipCode:'',accountType:'CHECKING',referralCode:''});
+  const set = k => v => setF(p=>({...p,[k]:v}));
+
+  async function submit() {
+    setLoading(true);
+    try {
+      const r = await api.submitApplication({firstName:f.firstName,lastName:f.lastName,email:f.email,dateOfBirth:f.dateOfBirth,phone:f.phone,address:{street:f.street,city:f.city,state:f.state,zipCode:f.zipCode},accountType:f.accountType});
+      setDone(r); showToast('Application submitted!','success');
+    } catch(e) { showToast('Submission failed','error'); }
+    finally { setLoading(false); }
+  }
+
+  if (done) return (
+    <div style={{minHeight:'100%',display:'flex',alignItems:'center',justifyContent:'center',padding:40}}>
+      <div className="fade-up card-dark" style={{padding:48,maxWidth:440,width:'100%',textAlign:'center'}}>
+        <div style={{width:72,height:72,borderRadius:'50%',background:'rgba(48,209,88,0.15)',border:'1px solid rgba(48,209,88,0.25)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:32,margin:'0 auto 24px',color:'var(--green)'}}>✓</div>
+        <h2 style={{fontSize:24,fontWeight:700,letterSpacing:'-0.03em',marginBottom:8}}>Application Received</h2>
+        <p style={{color:'var(--label2)',fontSize:14,marginBottom:6}}>Reference ID</p>
+        <p style={{fontFamily:'monospace',color:'var(--blue)',fontSize:13,marginBottom:24}}>{done.id}</p>
+        <p style={{color:'var(--label3)',fontSize:13,lineHeight:1.6,marginBottom:32}}>We'll review your application and notify you within 1–2 business days.</p>
+        <button className="btn btn-primary" onClick={()=>setPage('dashboard')}>Go to Dashboard</button>
+      </div>
+    </div>
+  );
+
+  const steps = ['Personal','Address','Account','Review'];
+  return (
+    <div style={{padding:'40px',maxWidth:640,margin:'0 auto'}}>
+      <div style={{marginBottom:36}}>
+        <h1 style={{fontSize:32,fontWeight:700,letterSpacing:'-0.03em'}}>Open an Amex Account</h1>
+        <p style={{color:'var(--label2)',marginTop:6,fontSize:15}}>Takes about 3 minutes. No fees, no minimums. All fields are encrypted.</p>
+      </div>
+
+      {/* Steps */}
+      <div style={{display:'flex',alignItems:'center',marginBottom:36}}>
+        {steps.map((s,i)=>(
+          <React.Fragment key={i}>
+            <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6}}>
+              <div className="step-dot" style={{background:step>i+1?'var(--green)':step===i+1?'var(--blue)':'var(--s4)',color:step>i+1?'var(--black)':'#fff',fontSize:12}}>
+                {step>i+1?'✓':i+1}
+              </div>
+              <span style={{fontSize:11,color:step===i+1?'#fff':'var(--label2)',fontWeight:step===i+1?600:400}}>{s}</span>
+            </div>
+            {i<steps.length-1 && <div className="step-line" style={{background:step>i+1?'var(--green)':isLight?'rgba(0,0,0,0.10)':'rgba(255,255,255,0.08)',margin:'0 6px',marginBottom:18}}/>}
+          </React.Fragment>
+        ))}
+      </div>
+
+      <div className="card-dark fade-up" style={{padding:32}}>
+        {step===1 && (
+          <div style={{display:'flex',flexDirection:'column',gap:20}}>
+            <h2 style={{fontSize:18,fontWeight:700,letterSpacing:'-0.02em',marginBottom:4}}>Personal Information</h2>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <Field label="First Name"><TextInput value={f.firstName} onChange={set('firstName')} placeholder="Alex"/></Field>
+              <Field label="Last Name"><TextInput value={f.lastName}  onChange={set('lastName')}  placeholder="Rivera"/></Field>
+            </div>
+            <Field label="Email"><TextInput value={f.email} onChange={set('email')} type="email" placeholder="alex@email.com"/></Field>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <Field label="Date of Birth"><TextInput value={f.dateOfBirth} onChange={set('dateOfBirth')} type="date"/></Field>
+              <Field label="SSN (last 4)"><TextInput value={f.ssn} onChange={set('ssn')} placeholder="••••" hint="Demo: any 4 digits"/></Field>
+            </div>
+            <Field label="Phone"><TextInput value={f.phone} onChange={set('phone')} type="tel" placeholder="+1 (555) 000-0000"/></Field>
+            <div style={{display:'flex',justifyContent:'flex-end',marginTop:8}}>
+              <button className="btn btn-primary" disabled={!f.firstName||!f.lastName||!f.email} onClick={()=>setStep(2)}>Continue →</button>
+            </div>
+          </div>
+        )}
+        {step===2 && (
+          <div style={{display:'flex',flexDirection:'column',gap:20}}>
+            <h2 style={{fontSize:18,fontWeight:700,letterSpacing:'-0.02em',marginBottom:4}}>Home Address</h2>
+            <Field label="Street Address"><TextInput value={f.street} onChange={set('street')} placeholder="123 Main St"/></Field>
+            <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:12}}>
+              <Field label="City"><TextInput value={f.city} onChange={set('city')} placeholder="New York"/></Field>
+              <Field label="State"><TextInput value={f.state} onChange={set('state')} placeholder="NY"/></Field>
+              <Field label="ZIP"><TextInput value={f.zipCode} onChange={set('zipCode')} placeholder="10001"/></Field>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',marginTop:8}}>
+              <button className="btn btn-dark" onClick={()=>setStep(1)}>← Back</button>
+              <button className="btn btn-primary" disabled={!f.street||!f.city} onClick={()=>setStep(3)}>Continue →</button>
+            </div>
+          </div>
+        )}
+        {step===3 && (
+          <div style={{display:'flex',flexDirection:'column',gap:20}}>
+            <h2 style={{fontSize:18,fontWeight:700,letterSpacing:'-0.02em',marginBottom:4}}>Account Type</h2>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+              {[{v:'CHECKING',l:'Amex Checking',d:'No fees · Early direct deposit · Free ATM',i:'◈'},
+                {v:'SAVINGS', l:'High Yield Savings', d:'4.25% APY · FDIC insured · Daily compounding',i:'◉'},
+                {v:'MONEY_MARKET',l:'Money Market',d:'Tiered rates · Higher yields',i:'◎'},
+                {v:'CERTIFICATE_OF_DEPOSIT',l:'Certificate of Deposit',d:'Fixed-term guaranteed rate',i:'▣'}].map(t=>(
+                <div key={t.v} onClick={()=>set('accountType')(t.v)}
+                  style={{padding:20,borderRadius:14,cursor:'pointer',
+                    border:`1.5px solid ${f.accountType===t.v?'var(--blue)':isLight?'rgba(0,0,0,0.10)':'rgba(255,255,255,0.08)'}`,
+                    background:f.accountType===t.v?'rgba(0,113,227,0.10)':isLight?'rgba(0,0,0,0.03)':'rgba(255,255,255,0.03)',
+                    transition:'all 0.2s var(--ease)'}}>
+                  <div style={{fontSize:22,marginBottom:10,color:f.accountType===t.v?'var(--blue)':'var(--label3)'}}>{t.i}</div>
+                  <div style={{fontWeight:700,fontSize:14,letterSpacing:'-0.01em'}}>{t.l}</div>
+                  <div style={{fontSize:12,color:'var(--label2)',marginTop:3}}>{t.d}</div>
+                </div>
+              ))}
+            </div>
+            <Field label="Referral Code (optional)"><TextInput value={f.referralCode} onChange={set('referralCode')} placeholder="FRIEND2025"/></Field>
+            <div style={{display:'flex',justifyContent:'space-between',marginTop:8}}>
+              <button className="btn btn-dark" onClick={()=>setStep(2)}>← Back</button>
+              <button className="btn btn-primary" onClick={()=>setStep(4)}>Review →</button>
+            </div>
+          </div>
+        )}
+        {step===4 && (
+          <div style={{display:'flex',flexDirection:'column',gap:16}}>
+            <h2 style={{fontSize:18,fontWeight:700,letterSpacing:'-0.02em',marginBottom:4}}>Review & Submit</h2>
+            {[['Name',`${f.firstName} ${f.lastName}`],['Email',f.email],['Date of Birth',f.dateOfBirth],['Address',`${f.street}, ${f.city}, ${f.state} ${f.zipCode}`],['Account Type',f.accountType]].map(([k,v])=>(
+              <div key={k} style={{display:'flex',justifyContent:'space-between',padding:'12px 0',borderBottom:`1px solid ${isLight?'rgba(0,0,0,0.06)':'rgba(255,255,255,0.06)'}`}}>
+                <span style={{color:'var(--label2)',fontSize:14}}>{k}</span>
+                <span style={{fontSize:14,fontWeight:600}}>{v||'—'}</span>
+              </div>
+            ))}
+            <p style={{fontSize:12,color:'var(--label3)',marginTop:8,lineHeight:1.6}}>By submitting you authorize identity verification per USA PATRIOT Act requirements.</p>
+            <div style={{display:'flex',justifyContent:'space-between',marginTop:8}}>
+              <button className="btn btn-dark" onClick={()=>setStep(3)}>← Back</button>
+              <button className="btn btn-primary" disabled={loading} onClick={submit}>
+                {loading?<><div className="spin" style={{width:14,height:14,border:'2px solid rgba(255,255,255,0.3)',borderTopColor:'#fff',borderRadius:'50%'}}/>Submitting…</>:'Submit Application'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── DASHBOARD ──────────────────────────────────────────────── */
+function DashboardPage() {
+  const { session, setPage, showToast, theme } = useApp();
+  const isLight = theme === 'light';
+  const D = isLight
+    ? { border: 'rgba(0,0,0,0.07)', iconBg: 'rgba(0,0,0,0.05)', divider: 'rgba(0,0,0,0.06)', textVal: '#1d1d1f' }
+    : { border: 'rgba(255,255,255,0.05)', iconBg: 'rgba(255,255,255,0.07)', divider: 'rgba(255,255,255,0.06)', textVal: '#fff' };
+  const [acctTab, setAcctTab] = useState('checking');
+  const [account, setAccount] = useState(null);
+  const [txns, setTxns] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(()=>{
+    (async()=>{
+      try {
+        const [a,t] = await Promise.all([api.getAccount(session.accountId),api.getTransactions(session.accountId,0,6)]);
+        setAccount(a); setTxns(t.content||[]);
+      } catch { showToast('Could not load dashboard','error'); }
+      finally { setLoading(false); }
+    })();
+  },[]);
+
+  if(loading) return <Spinner/>;
+
+  const weekData = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((l,i)=>({label:l,value:[45.99,3200,200,129,85,0,67.8][i]||0}));
+  const savingsAcct = MOCK.savingsAccount;
+  const rewards = MOCK.rewards;
+
+  const chkActive = acctTab === 'checking';
+  const savActive = acctTab === 'savings';
+
+  return (
+    <div style={{padding:'40px',maxWidth:980,margin:'0 auto',display:'flex',flexDirection:'column',gap:28}}>
+
+      {/* ── Header ── */}
+      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:16}}>
+        <div>
+          <div style={{fontSize:12,color:'var(--label2)',letterSpacing:'0.05em',textTransform:'uppercase',marginBottom:6}}>
+            Welcome back · {rewards.tier}
+          </div>
+          <h1 style={{fontSize:32,fontWeight:700,letterSpacing:'-0.03em'}}>{session.name}</h1>
+        </div>
+        {/* Membership Rewards pill */}
+        <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 16px',borderRadius:14,
+            background:isLight?'rgba(181,160,84,0.08)':'rgba(181,160,84,0.10)',
+            border:'1px solid rgba(181,160,84,0.28)'}}>
+            <span style={{fontSize:18,color:'var(--amex-gold)'}}>★</span>
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:'var(--amex-gold)',letterSpacing:'-0.01em'}}>{rewards.points.toLocaleString()} pts</div>
+              <div style={{fontSize:10,color:'var(--label2)',letterSpacing:'0.02em'}}>MEMBERSHIP REWARDS®</div>
+            </div>
+          </div>
+          <button className="btn btn-dark btn-sm" onClick={()=>setPage('onboarding')}>+ New Account</button>
+        </div>
+      </div>
+
+      {/* ── Dual Account Cards ── */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+
+        {/* Checking */}
+        <div onClick={()=>setAcctTab('checking')}
+          style={{padding:'26px 28px',borderRadius:22,cursor:'pointer',transition:'all 0.28s var(--ease)',
+            background:chkActive?'linear-gradient(135deg,#003087 0%,#006FCF 100%)':(isLight?'#ffffff':'var(--s2)'),
+            border:chkActive?'1px solid rgba(255,255,255,0.14)':`1px solid ${isLight?'rgba(0,0,0,0.08)':'rgba(255,255,255,0.07)'}`,
+            boxShadow:chkActive?'0 12px 40px rgba(0,48,135,0.40)':'none',
+          }}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+            <div style={{fontSize:10,fontWeight:700,letterSpacing:'0.08em',textTransform:'uppercase',
+              color:chkActive?'rgba(255,255,255,0.65)':'var(--label2)'}}>Checking Account</div>
+            <div style={{width:30,height:30,borderRadius:9,
+              background:chkActive?'rgba(255,255,255,0.14)':'rgba(0,111,207,0.10)',
+              display:'flex',alignItems:'center',justifyContent:'center',
+              fontSize:16,color:chkActive?'rgba(255,255,255,0.85)':'var(--blue)'}}>◈</div>
+          </div>
+          <div style={{fontSize:11,color:chkActive?'rgba(255,255,255,0.50)':isLight?'#8e8e93':'var(--label2)',
+            marginBottom:6,fontFamily:'monospace',letterSpacing:'0.06em'}}>{account?.accountNumber}</div>
+          <div style={{fontSize:30,fontWeight:800,letterSpacing:'-0.03em',lineHeight:1.1,
+            color:chkActive?'#fff':isLight?'#1d1d1f':'#fff'}}>
+            {fmt(account?.availableBalance??0)}
+          </div>
+          <div style={{fontSize:11,marginTop:4,color:chkActive?'rgba(255,255,255,0.48)':isLight?'#8e8e93':'var(--label3)'}}>
+            Available Balance
+          </div>
+          <div style={{marginTop:16,display:'flex',gap:6,flexWrap:'wrap'}}>
+            {['No Fees','Early DD','Free ATM'].map(tag=>(
+              <span key={tag} style={{fontSize:9,fontWeight:700,letterSpacing:'0.04em',padding:'3px 9px',borderRadius:99,
+                background:chkActive?'rgba(255,255,255,0.14)':isLight?'rgba(0,111,207,0.08)':'rgba(0,111,207,0.10)',
+                color:chkActive?'rgba(255,255,255,0.80)':isLight?'#006FCF':'#63b3ff',
+                border:chkActive?'none':`1px solid ${isLight?'rgba(0,111,207,0.18)':'rgba(0,111,207,0.18)'}`}}>{tag}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* High Yield Savings */}
+        <div onClick={()=>setAcctTab('savings')}
+          style={{padding:'26px 28px',borderRadius:22,cursor:'pointer',transition:'all 0.28s var(--ease)',
+            background:savActive?'linear-gradient(135deg,#064e3b 0%,#059669 100%)':(isLight?'#ffffff':'var(--s2)'),
+            border:savActive?'1px solid rgba(255,255,255,0.14)':`1px solid ${isLight?'rgba(0,0,0,0.08)':'rgba(255,255,255,0.07)'}`,
+            boxShadow:savActive?'0 12px 40px rgba(5,150,105,0.35)':'none',
+          }}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+            <div style={{fontSize:10,fontWeight:700,letterSpacing:'0.08em',textTransform:'uppercase',
+              color:savActive?'rgba(255,255,255,0.65)':'var(--label2)'}}>High Yield Savings</div>
+            <div style={{width:30,height:30,borderRadius:9,
+              background:savActive?'rgba(255,255,255,0.14)':'rgba(48,209,88,0.10)',
+              display:'flex',alignItems:'center',justifyContent:'center',
+              fontSize:16,color:savActive?'rgba(255,255,255,0.85)':'var(--green)'}}>◉</div>
+          </div>
+          <div style={{fontSize:11,color:savActive?'rgba(255,255,255,0.50)':isLight?'#8e8e93':'var(--label2)',
+            marginBottom:6,fontFamily:'monospace',letterSpacing:'0.06em'}}>{savingsAcct.accountNumber}</div>
+          <div style={{fontSize:30,fontWeight:800,letterSpacing:'-0.03em',lineHeight:1.1,
+            color:savActive?'#fff':isLight?'#1d1d1f':'#fff'}}>
+            {fmt(savingsAcct.currentBalance)}
+          </div>
+          <div style={{fontSize:11,marginTop:4,color:savActive?'rgba(255,255,255,0.48)':isLight?'#8e8e93':'var(--label3)'}}>
+            Current Balance
+          </div>
+          <div style={{marginTop:16,display:'flex',alignItems:'center',gap:10}}>
+            <span style={{fontSize:18,fontWeight:800,letterSpacing:'-0.02em',
+              color:savActive?'#6ee7b7':'var(--green)'}}>{savingsAcct.apy}% APY</span>
+            <span style={{fontSize:9,fontWeight:700,letterSpacing:'0.04em',padding:'3px 9px',borderRadius:99,
+              background:savActive?'rgba(255,255,255,0.14)':isLight?'rgba(48,209,88,0.10)':'rgba(48,209,88,0.12)',
+              color:savActive?'rgba(255,255,255,0.80)':'var(--green)',
+              border:savActive?'none':`1px solid rgba(48,209,88,0.22)`}}>HIGH YIELD</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Quick Actions ── */}
+      <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+        <button className="btn btn-primary" onClick={()=>setPage('fund')}>⇌ Transfer Money</button>
+        <button className="btn btn-dark" onClick={()=>setPage('atm')}>▣ Pay / Withdraw</button>
+        <button className="btn btn-dark" onClick={()=>setPage('transactions')}>≡ Transactions</button>
+      </div>
+
+      {/* ── Account-specific content ── */}
+      {chkActive ? (
+        <>
+          {/* Checking stats */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+            {[
+              {label:'Current Balance',  value:fmt(account?.currentBalance??0),  note:'Includes pending'},
+              {label:'Pending Holds',    value:fmt(account?.pendingBalance??0),   note:'1–3 business days', warn:true},
+              {label:'Cashback Earned',  value:fmt(rewards.cashbackMTD),           note:'This month · '+rewards.cashbackRate+'% base', good:true},
+            ].map(c=>(
+              <div key={c.label} className="card-dark" style={{padding:'22px 24px'}}>
+                <div style={{fontSize:11,color:'var(--label2)',letterSpacing:'0.05em',textTransform:'uppercase',marginBottom:12}}>{c.label}</div>
+                <div className="stat-value" style={{color:c.warn?'var(--orange)':c.good?'var(--green)':D.textVal}}>{c.value}</div>
+                <div style={{fontSize:12,color:'var(--label3)',marginTop:6}}>{c.note}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Chart + Transactions */}
+          <div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:20}}>
+            <div className="card-dark" style={{padding:'24px'}}>
+              <div style={{fontSize:13,fontWeight:700,letterSpacing:'-0.01em',marginBottom:4}}>Weekly Spending</div>
+              <div style={{fontSize:11,color:'var(--label2)',marginBottom:20}}>This week</div>
+              <BarChart data={weekData}/>
+              <div style={{marginTop:20,paddingTop:16,borderTop:`1px solid ${D.divider}`,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontSize:12,color:'var(--label2)'}}>Total</span>
+                <span style={{fontSize:16,fontWeight:700}}>{fmt(weekData.reduce((s,d)=>s+d.value,0))}</span>
+              </div>
+            </div>
+            <div className="card-dark" style={{padding:'24px'}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20}}>
+                <span style={{fontSize:13,fontWeight:700,letterSpacing:'-0.01em'}}>Recent Transactions</span>
+                <button className="btn btn-dark btn-sm" onClick={()=>setPage('transactions')}>See All</button>
+              </div>
+              <div style={{display:'flex',flexDirection:'column',gap:2}}>
+                {txns.map(tx=>{
+                  const icon = tx.category==='POS_PURCHASE'?'🛒':tx.category==='ATM_WITHDRAWAL'?'🏧':tx.category==='DIRECT_DEPOSIT'?'💼':tx.category==='BILL_PAYMENT'?'📄':'💸';
+                  return (
+                    <div key={tx.id} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:`1px solid ${D.border}`}}>
+                      <div style={{width:38,height:38,borderRadius:12,background:D.iconBg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>{icon}</div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:14,fontWeight:600,letterSpacing:'-0.01em',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{tx.description}</div>
+                        <div style={{fontSize:11,color:'var(--label2)',marginTop:2}}>{fmtDate(tx.createdAt)}</div>
+                      </div>
+                      <div style={{fontSize:14,fontWeight:700,color:tx.type==='CREDIT'?'var(--green)':D.textVal,flexShrink:0}}>
+                        {tx.type==='CREDIT'?'+':'-'}{fmt(tx.amount)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Savings stats */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+            {[
+              {label:'Annual Percentage Yield', value:`${savingsAcct.apy}%`,              note:'Variable rate · Updated daily'},
+              {label:'Interest Earned (MTD)',   value:fmt(savingsAcct.interestEarnedMTD),  note:'Credited to account monthly'},
+              {label:'Interest Earned (YTD)',   value:fmt(savingsAcct.interestEarnedYTD),  note:'Calendar year total'},
+            ].map(c=>(
+              <div key={c.label} className="card-dark" style={{padding:'22px 24px'}}>
+                <div style={{fontSize:11,color:'var(--label2)',letterSpacing:'0.05em',textTransform:'uppercase',marginBottom:12}}>{c.label}</div>
+                <div className="stat-value" style={{color:'var(--green)'}}>{c.value}</div>
+                <div style={{fontSize:12,color:'var(--label3)',marginTop:6}}>{c.note}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Benefits + Growth projection */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+            <div className="card-dark" style={{padding:'28px'}}>
+              <div style={{fontSize:14,fontWeight:700,letterSpacing:'-0.01em',marginBottom:20}}>Account Benefits</div>
+              {[
+                ['No monthly maintenance fees'],
+                ['FDIC insured up to $250,000'],
+                ['Interest compounds daily'],
+                ['No minimum balance required'],
+                ['Instant transfers to Amex Checking'],
+                ['Auto-save rules available'],
+              ].map(([text])=>(
+                <div key={text} style={{display:'flex',alignItems:'center',gap:12,padding:'10px 0',borderBottom:`1px solid ${D.divider}`}}>
+                  <span style={{width:20,height:20,borderRadius:'50%',flexShrink:0,
+                    background:'rgba(48,209,88,0.15)',display:'flex',alignItems:'center',
+                    justifyContent:'center',fontSize:11,color:'var(--green)',fontWeight:700}}>✓</span>
+                  <span style={{fontSize:13}}>{text}</span>
+                </div>
+              ))}
+            </div>
+            <div className="card-dark" style={{padding:'28px'}}>
+              <div style={{fontSize:14,fontWeight:700,letterSpacing:'-0.01em',marginBottom:4}}>Projected Growth</div>
+              <div style={{fontSize:11,color:'var(--label2)',marginBottom:20}}>At current {savingsAcct.apy}% APY · Starting {fmt(savingsAcct.currentBalance)}</div>
+              {[{period:'3 months',n:3},{period:'6 months',n:6},{period:'12 months',n:12},{period:'24 months',n:24}].map(p=>{
+                const projected = savingsAcct.currentBalance * Math.pow(1+savingsAcct.apy/100/12, p.n);
+                const interest  = projected - savingsAcct.currentBalance;
+                const barPct    = (p.n/24)*100;
+                return (
+                  <div key={p.period} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 0',borderBottom:`1px solid ${D.divider}`}}>
+                    <span style={{fontSize:12,color:'var(--label2)',minWidth:82}}>{p.period}</span>
+                    <div style={{flex:1,margin:'0 12px'}}>
+                      <div style={{height:4,borderRadius:99,background:D.divider,overflow:'hidden'}}>
+                        <div style={{height:'100%',borderRadius:99,background:'var(--green)',width:`${barPct}%`,transition:'width 0.6s var(--ease)'}}/>
+                      </div>
+                    </div>
+                    <div style={{textAlign:'right'}}>
+                      <div style={{fontSize:13,fontWeight:700,color:'var(--green)'}}>{fmt(projected)}</div>
+                      <div style={{fontSize:10,color:'var(--label3)'}}>+{fmt(interest)}</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── Membership Rewards banner ── */}
+      <div style={{padding:'24px 28px',borderRadius:20,
+        background:isLight?'linear-gradient(135deg,#fdf6e3 0%,#fef9ec 100%)':'linear-gradient(135deg,#1a1000 0%,#2d1f00 100%)',
+        border:'1px solid rgba(181,160,84,0.32)',
+        display:'grid',gridTemplateColumns:'1fr auto',gap:20,alignItems:'center'}}>
+        <div style={{display:'flex',alignItems:'center',gap:16}}>
+          <div style={{width:48,height:48,borderRadius:14,flexShrink:0,
+            background:'rgba(181,160,84,0.16)',border:'1px solid rgba(181,160,84,0.32)',
+            display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,color:'var(--amex-gold)'}}>★</div>
+          <div>
+            <div style={{fontWeight:700,fontSize:15,letterSpacing:'-0.01em',color:isLight?'#7a5c0a':'var(--amex-gold)'}}>Membership Rewards®</div>
+            <div style={{fontSize:12,marginTop:2,color:isLight?'rgba(122,92,10,0.60)':'rgba(181,160,84,0.58)'}}>
+              Gold Card Member since {rewards.memberSince} · {rewards.bonusCategory}
+            </div>
+          </div>
+        </div>
+        <div style={{display:'flex',gap:22,alignItems:'center'}}>
+          <div style={{textAlign:'right'}}>
+            <div style={{fontSize:22,fontWeight:800,letterSpacing:'-0.03em',color:isLight?'#7a5c0a':'var(--amex-gold)'}}>{rewards.points.toLocaleString()}</div>
+            <div style={{fontSize:10,letterSpacing:'0.04em',color:isLight?'rgba(122,92,10,0.52)':'rgba(181,160,84,0.52)'}}>POINTS BALANCE</div>
+          </div>
+          <div style={{width:1,height:38,background:'rgba(181,160,84,0.22)'}}/>
+          <div style={{textAlign:'right'}}>
+            <div style={{fontSize:16,fontWeight:700,color:isLight?'#7a5c0a':'var(--amex-gold)'}}>{fmt(rewards.cashbackMTD)}</div>
+            <div style={{fontSize:10,letterSpacing:'0.04em',color:isLight?'rgba(122,92,10,0.52)':'rgba(181,160,84,0.52)'}}>CASHBACK MTD</div>
+          </div>
+          <div style={{width:1,height:38,background:'rgba(181,160,84,0.22)'}}/>
+          <div style={{textAlign:'right'}}>
+            <div style={{fontSize:14,fontWeight:600,color:isLight?'rgba(122,92,10,0.70)':'rgba(181,160,84,0.65)'}}>{rewards.pendingPoints.toLocaleString()}</div>
+            <div style={{fontSize:10,letterSpacing:'0.04em',color:isLight?'rgba(122,92,10,0.42)':'rgba(181,160,84,0.42)'}}>PENDING PTS</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
+/* ─── TRANSACTIONS ───────────────────────────────────────────── */
+function TransactionsPage() {
+  const { session, showToast, theme } = useApp();
+  const isLight = theme === 'light';
+  const [txns, setTxns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [keyword, setKeyword] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+
+  const load = useCallback(async()=>{
+    setLoading(true);
+    try { const d = await api.searchTransactions(session.accountId,{keyword,type:typeFilter||undefined}); setTxns(d.content||[]); }
+    catch { showToast('Failed to load','error'); }
+    finally { setLoading(false); }
+  },[keyword,typeFilter]);
+
+  useEffect(()=>{ load(); },[load]);
+
+  const credits = txns.filter(t=>t.type==='CREDIT').reduce((s,t)=>s+t.amount,0);
+  const debits  = txns.filter(t=>t.type==='DEBIT' ).reduce((s,t)=>s+t.amount,0);
+
+  function exportCSV(){
+    const h='Date,Description,Type,Category,Amount,Status\n';
+    const rows=txns.map(t=>`${fmtDate(t.createdAt)},"${t.description}",${t.type},${t.category},${t.amount},${t.status}`).join('\n');
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([h+rows],{type:'text/csv'}));a.download='transactions.csv';a.click();
+  }
+
+  return (
+    <div style={{padding:'40px',maxWidth:960,margin:'0 auto',display:'flex',flexDirection:'column',gap:24}}>
+      <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between'}}>
+        <div>
+          <div style={{fontSize:12,color:'var(--label2)',letterSpacing:'0.05em',textTransform:'uppercase',marginBottom:6}}>Account History</div>
+          <h1 style={{fontSize:32,fontWeight:700,letterSpacing:'-0.03em'}}>Transactions</h1>
+        </div>
+        <button className="btn btn-dark btn-sm" onClick={exportCSV}>↓ Export CSV</button>
+      </div>
+
+      {/* Summary */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+        {[{l:'Money In',v:fmt(credits),c:'var(--green)'},{l:'Money Out',v:fmt(debits),c:'var(--red)'},{l:'Net',v:fmt(credits-debits),c:credits-debits>=0?'var(--green)':'var(--red)'}].map(s=>(
+          <div key={s.l} className="card-dark" style={{padding:'20px 24px'}}>
+            <div style={{fontSize:11,color:'var(--label2)',letterSpacing:'0.04em',textTransform:'uppercase',marginBottom:8}}>{s.l}</div>
+            <div style={{fontSize:24,fontWeight:700,letterSpacing:'-0.03em',color:s.c}}>{s.v}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Search bar */}
+      <div className="card-dark" style={{padding:'16px 20px',display:'flex',gap:12,alignItems:'center'}}>
+        <input value={keyword} onChange={e=>setKeyword(e.target.value)} onKeyDown={e=>e.key==='Enter'&&load()}
+          placeholder="Search transactions…" className="inp" style={{flex:1}}/>
+        <select value={typeFilter} onChange={e=>setTypeFilter(e.target.value)} className="inp" style={{width:160}}>
+          <option value="">All Types</option>
+          <option value="DEBIT">Debits</option>
+          <option value="CREDIT">Credits</option>
+        </select>
+        <button className="btn btn-primary btn-sm" onClick={load}>Search</button>
+      </div>
+
+      {/* Table */}
+      <div className="card-dark" style={{overflow:'hidden'}}>
+        {loading ? <Spinner/> : (
+          <table className="tbl tbl-dark">
+            <thead><tr>
+              {['Date','Description','Category','Type','Amount','Status'].map(h=>(
+                <th key={h}>{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {txns.length===0
+                ? <tr><td colSpan={6} style={{textAlign:'center',color:'var(--label3)',padding:'48px 0'}}>No transactions found</td></tr>
+                : txns.map(tx=>(
+                <tr key={tx.id}>
+                  <td style={{color:'var(--label2)',fontSize:12,whiteSpace:'nowrap'}}>{fmtDate(tx.createdAt)}</td>
+                  <td style={{fontWeight:600,maxWidth:220,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{tx.description}</td>
+                  <td style={{color:'var(--label2)',fontSize:12}}>{tx.category?.replace(/_/g,' ')}</td>
+                  <td><Badge label={tx.type} color={tx.type==='CREDIT'?'green':'neutral'}/></td>
+                  <td style={{fontWeight:700,color:tx.type==='CREDIT'?'var(--green)':isLight?'#1d1d1f':'#fff',whiteSpace:'nowrap'}}>{tx.type==='CREDIT'?'+':'-'}{fmt(tx.amount)}</td>
+                  <td>{txBadge(tx.status)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── FUND ACCOUNT ───────────────────────────────────────────── */
+function FundAccountPage() {
+  const { session, showToast, theme } = useApp();
+  const isLight = theme === 'light';
+  const D = {
+    divider:      isLight ? 'rgba(0,0,0,0.07)'   : 'rgba(255,255,255,0.07)',
+    subtleBg:     isLight ? 'rgba(0,0,0,0.03)'   : 'rgba(255,255,255,0.04)',
+    subtleBorder: isLight ? 'rgba(0,0,0,0.07)'   : 'rgba(255,255,255,0.06)',
+    flowBg:       isLight ? '#f0f4ff'             : 'rgba(255,255,255,0.05)',
+    flowBorder:   isLight ? 'rgba(0,113,227,0.14)': 'rgba(255,255,255,0.08)',
+    textPrimary:  isLight ? '#1d1d1f'             : '#fff',
+  };
+
+  const [tab,     setTab]     = useState('ach');
+  const [loading, setLoading] = useState(false);
+  const [result,  setResult]  = useState(null);
+
+  // Shared linked external accounts (dropdown options)
+  const LINKED = [
+    { value:'chase-6789',  label:'Chase Bank ****6789',       routing:'021000021', account:'123456789' },
+    { value:'bofa-3456',   label:'Bank of America ****3456',  routing:'026009593', account:'345678901' },
+    { value:'wells-7890',  label:'Wells Fargo ****7890',      routing:'121042882', account:'789012345' },
+    { value:'manual',      label:'Enter manually…',           routing:'',          account:''          },
+  ];
+  const MY_ACCTS = [
+    { value:'CHECKING', label:'Checking ****4892', sub:'Primary checking', balance: 12450.75 },
+    { value:'SAVINGS',  label:'Savings ****5501',  sub:'High-yield savings', balance: 8200.00 },
+  ];
+
+  // ACH state
+  const [ach, setAch] = useState({
+    direction: 'PULL',        // PULL = deposit into my acct | PUSH = send out
+    myAcct:    'CHECKING',
+    extAcct:   'chase-6789',
+    extRouting:'021000021',
+    extAccount:'123456789',
+    amount:'', memo:'',
+  });
+  // Wire state
+  const [wire, setWire] = useState({
+    direction:   'IN',        // IN = receive | OUT = send
+    myAcct:      'CHECKING',
+    beneficiary: '', bankName:'', routing:'', extAccount:'',
+    senderName:'', senderBank:'',
+    reference:'', purpose:'BUSINESS',
+    amount:'',
+  });
+  // Internal state
+  const [intern, setIntern] = useState({ from:'CHECKING', to:'SAVINGS', amount:'', memo:'' });
+
+  const sa = k => v => setAch(p => ({...p, [k]:v}));
+  const sw = k => v => setWire(p => ({...p, [k]:v}));
+  const si = k => v => setIntern(p => ({...p, [k]:v}));
+
+  // When linked account dropdown changes, auto-fill routing/account
+  function onAchExtChange(val) {
+    const found = LINKED.find(l=>l.value===val);
+    setAch(p=>({...p, extAcct:val, extRouting:found?.routing||'', extAccount:found?.account||''}));
+  }
+
+  // Tab meta
+  const TABS = [
+    { id:'ach',      label:'ACH',      icon:'⇌', color:'#30d158', fee:'Free', time:'1–3 days' },
+    { id:'wire',     label:'Wire',     icon:'⚡', color:'#ff9f0a', fee:wire.direction==='OUT'?'$25':'Free', time:'Same day' },
+    { id:'internal', label:'Internal', icon:'⇄', color:'#63b3ff', fee:'Free', time:'Instant'  },
+  ];
+  const cur = TABS.find(t=>t.id===tab);
+
+  // Derived flow nodes
+  const myAcctObj = id => MY_ACCTS.find(a=>a.value===id) || MY_ACCTS[0];
+  const linkedObj  = id => LINKED.find(l=>l.value===id)  || LINKED[0];
+
+  function getFlow() {
+    if (tab==='ach') {
+      const ext = linkedObj(ach.extAcct);
+      const my  = myAcctObj(ach.myAcct);
+      return ach.direction==='PULL'
+        ? { from:{label:ext.label, sub:`Routing ${ext.routing||'—'}`, icon:'🏦'}, to:{label:my.label, sub:my.sub, icon:'◈'} }
+        : { from:{label:my.label,  sub:my.sub,                         icon:'◈'}, to:{label:ext.label, sub:`Routing ${ext.routing||'—'}`, icon:'🏦'} };
+    }
+    if (tab==='wire') {
+      const my = myAcctObj(wire.myAcct);
+      return wire.direction==='IN'
+        ? { from:{label:wire.senderBank||'Sender Bank', sub:'External wire source', icon:'🌐'}, to:{label:my.label, sub:my.sub, icon:'◈'} }
+        : { from:{label:my.label, sub:my.sub, icon:'◈'}, to:{label:wire.beneficiary||'Beneficiary', sub:wire.bankName||'Enter bank below', icon:'🏛'} };
+    }
+    // internal
+    const f = myAcctObj(intern.from), t = myAcctObj(intern.to);
+    return { from:{label:f.label, sub:f.sub, icon:'◈'}, to:{label:t.label, sub:t.sub, icon:'◈'} };
+  }
+  const flow = getFlow();
+
+  const amountVal = tab==='ach' ? ach.amount : tab==='wire' ? wire.amount : intern.amount;
+  function setAmount(v) {
+    if (tab==='ach')      setAch(p=>({...p,amount:v}));
+    else if(tab==='wire') setWire(p=>({...p,amount:v}));
+    else                  setIntern(p=>({...p,amount:v}));
+  }
+
+  const wrapColor = cur.id==='wire' ? (wire.direction==='OUT'?'#ff9f0a':'#a78bfa') : cur.color;
+
+  async function submit() {
+    const rawAmt = tab==='ach'?ach.amount:tab==='wire'?wire.amount:intern.amount;
+    if (!rawAmt) { showToast('Enter an amount','error'); return; }
+    const amount = parseFloat(rawAmt);
+    setLoading(true);
+    try {
+      let r, label;
+      if (tab==='ach') {
+        r = await api.initiateAch({accountId:session.accountId, routingNumber:ach.extRouting, externalAccountNumber:ach.extAccount, amount, type:'PPD', transferDirection:ach.direction==='PULL'?'CREDIT':'DEBIT'});
+        label = ach.direction==='PULL' ? 'ACH Pull' : 'ACH Push';
+        setAch(p=>({...p,amount:'',memo:''}));
+      } else if (tab==='wire') {
+        r = await api.createTransaction({accountId:session.accountId, amount, type:wire.direction==='IN'?'CREDIT':'DEBIT', category:'WIRE_TRANSFER', description:wire.direction==='IN'?`Wire from ${wire.senderName||'External'}`:`Wire to ${wire.beneficiary||'External'}`});
+        label = wire.direction==='IN' ? 'Wire In' : 'Wire Out';
+        setWire(p=>({...p,amount:'',reference:''}));
+      } else {
+        r = await api.createTransaction({accountId:session.accountId, amount, type:'CREDIT', category:'INTERNAL_TRANSFER', description:`Internal: ${intern.from} → ${intern.to}`});
+        label = 'Internal Transfer';
+        setIntern(p=>({...p,amount:'',memo:''}));
+      }
+      setResult({...r, label, amount});
+      showToast(`${label} ${fmt(amount)} initiated`,'success');
+    } catch { showToast('Transfer failed','error'); }
+    finally { setLoading(false); }
+  }
+
+  const btnLabel = tab==='ach'?(ach.direction==='PULL'?'Pull Funds — Deposit':'Push Funds — Send'):tab==='wire'?(wire.direction==='IN'?'Simulate Wire In':'Send Wire Out'):'Transfer Now';
+  const wireInstructions = [['Bank Name','Banking Platform NA'],['ABA Routing','021000021'],['Account #','****4892'],['Account Name','Alex Rivera'],['SWIFT/BIC','BKPLUS33XXX']];
+
+  return (
+    <div style={{padding:'40px',maxWidth:980,margin:'0 auto',display:'flex',flexDirection:'column',gap:28}}>
+
+      {/* Header */}
+      <div>
+        <div style={{fontSize:12,color:'var(--label2)',letterSpacing:'0.05em',textTransform:'uppercase',marginBottom:6}}>Money Movement</div>
+        <h1 style={{fontSize:32,fontWeight:700,letterSpacing:'-0.03em'}}>Transfer & Fund</h1>
+      </div>
+
+      {/* 3-tab selector */}
+      <div style={{display:'flex',gap:10}}>
+        {TABS.map(t => {
+          const active = tab===t.id;
+          const c = t.id==='wire'?(wire.direction==='OUT'?'#ff9f0a':'#a78bfa'):t.color;
+          return (
+            <div key={t.id} onClick={()=>{setTab(t.id);setResult(null);}}
+              style={{flex:1,padding:'18px 20px',borderRadius:16,cursor:'pointer',
+                border:`1.5px solid ${active?c:D.subtleBorder}`,
+                background:active?`${c}18`:D.subtleBg,
+                transition:'all 0.2s var(--ease)'}}>
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+                <div style={{width:36,height:36,borderRadius:10,background:`${c}18`,border:`1px solid ${active?c:D.subtleBorder}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,color:c}}>{t.icon}</div>
+                <span style={{fontWeight:700,fontSize:16,letterSpacing:'-0.02em',color:active?c:D.textPrimary}}>{t.label}</span>
+              </div>
+              <div style={{display:'flex',gap:8,marginTop:4}}>
+                <span style={{fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:99,background:active?`${c}18`:D.subtleBg,border:`1px solid ${active?c:D.subtleBorder}`,color:active?c:'var(--label3)'}}>{t.id==='wire'?(wire.direction==='OUT'?'$25':'Free'):t.fee}</span>
+                <span style={{fontSize:11,color:'var(--label3)',paddingTop:2}}>· {t.time}</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Main grid */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 296px',gap:20,alignItems:'start'}}>
+
+        {/* ── Form card ── */}
+        <div className="card-dark fade-up" style={{padding:32,display:'flex',flexDirection:'column',gap:22}}>
+
+          {/* Direction toggle row — top of form */}
+          {tab==='ach' && (
+            <div>
+              <div className="lbl" style={{marginBottom:8}}>Direction</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                {[{v:'PULL',icon:'↙',label:'ACH Pull',sub:'Deposit into my account'},{v:'PUSH',icon:'↗',label:'ACH Push',sub:'Send from my account'}].map(o=>(
+                  <div key={o.v} onClick={()=>sa('direction')(o.v)}
+                    style={{padding:'12px 14px',borderRadius:12,cursor:'pointer',
+                      border:`1.5px solid ${ach.direction===o.v?'#30d158':D.subtleBorder}`,
+                      background:ach.direction===o.v?'rgba(48,209,88,0.10)':D.subtleBg,
+                      transition:'all 0.18s'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:3}}>
+                      <span style={{fontSize:18,color:ach.direction===o.v?'#30d158':'var(--label2)'}}>{o.icon}</span>
+                      <span style={{fontWeight:700,fontSize:13,color:ach.direction===o.v?'#30d158':D.textPrimary}}>{o.label}</span>
+                    </div>
+                    <div style={{fontSize:11,color:'var(--label2)'}}>{o.sub}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {tab==='wire' && (
+            <div>
+              <div className="lbl" style={{marginBottom:8}}>Direction</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                {[{v:'IN',icon:'⬇',label:'Wire In',sub:'Receive into my account',c:'#a78bfa'},{v:'OUT',icon:'⚡',label:'Wire Out',sub:'Send from my account',c:'#ff9f0a'}].map(o=>(
+                  <div key={o.v} onClick={()=>sw('direction')(o.v)}
+                    style={{padding:'12px 14px',borderRadius:12,cursor:'pointer',
+                      border:`1.5px solid ${wire.direction===o.v?o.c:D.subtleBorder}`,
+                      background:wire.direction===o.v?`${o.c}18`:D.subtleBg,
+                      transition:'all 0.18s'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:3}}>
+                      <span style={{fontSize:18,color:wire.direction===o.v?o.c:'var(--label2)'}}>{o.icon}</span>
+                      <span style={{fontWeight:700,fontSize:13,color:wire.direction===o.v?o.c:D.textPrimary}}>{o.label}</span>
+                    </div>
+                    <div style={{fontSize:11,color:'var(--label2)'}}>{o.sub}{o.v==='OUT'&&<span style={{color:'var(--orange)',fontWeight:600}}> · $25 fee</span>}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* From → To flow */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 44px 1fr',alignItems:'center',gap:8}}>
+            {[flow.from, null, flow.to].map((node,i) => node ? (
+              <div key={i} style={{padding:'14px 16px',borderRadius:14,background:D.flowBg,border:`1px solid ${D.flowBorder}`}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                  <div style={{width:28,height:28,borderRadius:8,background:`${wrapColor}18`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>{node.icon}</div>
+                  <div style={{fontSize:9,color:'var(--label3)',letterSpacing:'0.07em',fontWeight:700}}>{i===0?'FROM':'TO'}</div>
+                </div>
+                <div style={{fontWeight:700,fontSize:13,color:D.textPrimary,letterSpacing:'-0.01em'}}>{node.label}</div>
+                <div style={{fontSize:11,color:'var(--label2)',marginTop:2}}>{node.sub}</div>
+              </div>
+            ) : (
+              <div key="mid" style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+                <div style={{width:36,height:36,borderRadius:'50%',border:`2px solid ${wrapColor}`,background:`${wrapColor}15`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:15,color:wrapColor}}>→</div>
+                <div style={{fontSize:8,color:'var(--label3)',fontWeight:700,letterSpacing:'0.05em'}}>{cur.id==='wire'?(wire.direction==='OUT'?'SAME DAY':'SAME DAY'):(cur.id==='internal'?'INSTANT':'1–3 DAYS')}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Account selectors */}
+          {tab==='ach' && (
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <Field label={ach.direction==='PULL'?'To (My Account)':'From (My Account)'}>
+                <SelectInput value={ach.myAcct} onChange={sa('myAcct')} options={MY_ACCTS.map(a=>({value:a.value,label:a.label}))}/>
+              </Field>
+              <Field label={ach.direction==='PULL'?'From (External Account)':'To (External Account)'}>
+                <SelectInput value={ach.extAcct} onChange={onAchExtChange} options={LINKED.map(l=>({value:l.value,label:l.label}))}/>
+              </Field>
+            </div>
+          )}
+          {tab==='wire' && (
+            <Field label={wire.direction==='IN'?'To (My Account)':'From (My Account)'}>
+              <SelectInput value={wire.myAcct} onChange={sw('myAcct')} options={MY_ACCTS.map(a=>({value:a.value,label:a.label}))}/>
+            </Field>
+          )}
+          {tab==='internal' && (
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <Field label="From Account">
+                <SelectInput value={intern.from} onChange={v=>setIntern(p=>({...p,from:v,to:v==='CHECKING'?'SAVINGS':'CHECKING'}))} options={MY_ACCTS.map(a=>({value:a.value,label:a.label}))}/>
+              </Field>
+              <Field label="To Account">
+                <SelectInput value={intern.to} onChange={si('to')} options={MY_ACCTS.filter(a=>a.value!==intern.from).map(a=>({value:a.value,label:a.label}))}/>
+              </Field>
+            </div>
+          )}
+
+          {/* Manual routing/account (ACH only when "Enter manually") */}
+          {tab==='ach' && ach.extAcct==='manual' && (
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <Field label="Routing Number"><TextInput value={ach.extRouting} onChange={sa('extRouting')} placeholder="021000021"/></Field>
+              <Field label="Account Number"><TextInput value={ach.extAccount} onChange={sa('extAccount')} placeholder="123456789"/></Field>
+            </div>
+          )}
+
+          {/* Wire-specific fields */}
+          {tab==='wire' && wire.direction==='OUT' && (<>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <Field label="Beneficiary Name *"><TextInput value={wire.beneficiary} onChange={sw('beneficiary')} placeholder="Jane Smith"/></Field>
+              <Field label="Beneficiary Bank *"><TextInput value={wire.bankName}    onChange={sw('bankName')}    placeholder="JPMorgan Chase"/></Field>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <Field label="ABA Routing # *"><TextInput value={wire.routing}     onChange={sw('routing')}     placeholder="021000021"/></Field>
+              <Field label="Account # *">    <TextInput value={wire.extAccount}  onChange={sw('extAccount')}  placeholder="1234567890"/></Field>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <Field label="Wire Reference"><TextInput value={wire.reference} onChange={sw('reference')} placeholder="Invoice #1234"/></Field>
+              <Field label="Purpose"><SelectInput value={wire.purpose} onChange={sw('purpose')} options={[{value:'BUSINESS',label:'Business'},{value:'PERSONAL',label:'Personal'},{value:'INVESTMENT',label:'Investment'},{value:'OTHER',label:'Other'}]}/></Field>
+            </div>
+          </>)}
+          {tab==='wire' && wire.direction==='IN' && (
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <Field label="Sender Name"><TextInput value={wire.senderName} onChange={sw('senderName')} placeholder="Acme Corp"/></Field>
+              <Field label="Sender Bank"><TextInput value={wire.senderBank} onChange={sw('senderBank')} placeholder="Bank of America"/></Field>
+            </div>
+          )}
+
+          {/* Amount — big input */}
+          <div>
+            <div className="lbl">Amount</div>
+            <div style={{position:'relative'}}>
+              <span style={{position:'absolute',left:16,top:'50%',transform:'translateY(-50%)',fontSize:26,fontWeight:300,color:'var(--label2)',pointerEvents:'none'}}>$</span>
+              <input type="number" value={amountVal} onChange={e=>setAmount(e.target.value)} placeholder="0.00" min="0"
+                style={{width:'100%',padding:'15px 16px 15px 40px',fontSize:28,fontWeight:700,letterSpacing:'-0.03em',
+                  background:D.subtleBg,border:`1.5px solid ${D.subtleBorder}`,borderRadius:14,
+                  color:D.textPrimary,fontFamily:'inherit',outline:'none',transition:'border-color 0.2s'}}
+                onFocus={e=>e.target.style.borderColor=wrapColor}
+                onBlur={e=>e.target.style.borderColor=D.subtleBorder}/>
+            </div>
+          </div>
+
+          {/* Memo */}
+          {(tab==='ach'||tab==='internal') && (
+            <Field label="Memo (optional)">
+              <TextInput value={tab==='ach'?ach.memo:intern.memo} onChange={tab==='ach'?sa('memo'):si('memo')} placeholder="Payment reference"/>
+            </Field>
+          )}
+
+          {/* Summary pill */}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'11px 16px',borderRadius:12,background:D.subtleBg,border:`1px solid ${D.subtleBorder}`}}>
+            <div style={{display:'flex',gap:20}}>
+              {[
+                ['Fee',   tab==='wire'&&wire.direction==='OUT'?'$25.00':'Free'],
+                ['Settle',tab==='internal'?'Instant':tab==='wire'?'Same day':'1–3 days'],
+                ['Rail',  tab==='ach'?'NACHA ACH':tab==='internal'?'Internal':'Fedwire'],
+              ].map(([k,v])=>(
+                <div key={k}>
+                  <div style={{fontSize:9,letterSpacing:'0.06em',fontWeight:700,color:'var(--label3)',marginBottom:2}}>{k}</div>
+                  <div style={{fontSize:12,fontWeight:700,color:D.textPrimary}}>{v}</div>
+                </div>
+              ))}
+            </div>
+            <Badge label={tab==='ach'?'ACH':tab==='internal'?'INTERNAL':'WIRE'} color={tab==='ach'?'green':tab==='internal'?'blue':'orange'}/>
+          </div>
+
+          {/* Submit */}
+          <button className="btn btn-primary btn-lg" style={{width:'100%',borderRadius:14,background:wrapColor,fontSize:15,fontWeight:700}} disabled={loading} onClick={submit}>
+            {loading ? <><div className="spin" style={{width:16,height:16,border:'2px solid rgba(255,255,255,0.3)',borderTopColor:'#fff',borderRadius:'50%'}}/>Processing…</> : btnLabel}
+          </button>
+
+          {/* Success banner */}
+          {result && (
+            <div className="fade-up" style={{padding:'14px 18px',borderRadius:14,background:'rgba(48,209,88,0.10)',border:'1px solid rgba(48,209,88,0.22)',display:'flex',alignItems:'center',gap:14}}>
+              <div style={{width:34,height:34,borderRadius:'50%',background:'rgba(48,209,88,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,color:'var(--green)',flexShrink:0}}>✓</div>
+              <div>
+                <div style={{fontWeight:700,fontSize:14,color:'var(--green)'}}>{result.label} · {fmt(result.amount)}</div>
+                <div style={{fontSize:11,color:'var(--label2)',marginTop:2}}>Ref: {result.id?.slice(0,20)||'—'} · {result.status||'INITIATED'}</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── Sidebar ── */}
+        <div style={{display:'flex',flexDirection:'column',gap:14}}>
+
+          {/* Wire-In receiving instructions */}
+          {tab==='wire' && wire.direction==='IN' && (
+            <div className="card-dark" style={{padding:'20px 22px'}}>
+              <div className="lbl" style={{marginBottom:12}}>Your Wire Instructions</div>
+              {wireInstructions.map(([k,v])=>(
+                <div key={k} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'8px 0',borderBottom:`1px solid ${D.divider}`}}>
+                  <span style={{fontSize:11,color:'var(--label2)'}}>{k}</span>
+                  <span style={{fontSize:12,fontWeight:700,fontFamily:'monospace',color:D.textPrimary}}>{v}</span>
+                </div>
+              ))}
+              <button className="btn btn-dark btn-sm" style={{width:'100%',marginTop:12}} onClick={()=>{navigator.clipboard?.writeText(wireInstructions.map(([k,v])=>`${k}: ${v}`).join('\n'));showToast('Copied to clipboard','success');}}>Copy Instructions</button>
+            </div>
+          )}
+
+          {/* Linked accounts */}
+          <div className="card-dark" style={{padding:'20px 22px'}}>
+            <div className="lbl" style={{marginBottom:12}}>Linked External Accounts</div>
+            {LINKED.filter(l=>l.value!=='manual').map(l=>(
+              <div key={l.value} style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:D.subtleBg,borderRadius:11,border:`1px solid ${D.subtleBorder}`,marginBottom:8}}>
+                <div style={{width:30,height:30,borderRadius:8,background:'rgba(0,113,227,0.15)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>🏦</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:12,fontWeight:600,color:D.textPrimary,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{l.label}</div>
+                  <div style={{fontSize:10,color:'var(--label2)',fontFamily:'monospace',marginTop:1}}>RTN {l.routing}</div>
+                </div>
+                {l.value==='chase-6789'&&<span style={{fontSize:10,color:'var(--green)',fontWeight:700}}>✓</span>}
+              </div>
+            ))}
+            <button className="btn btn-dark btn-sm" style={{width:'100%',marginTop:4}}>+ Link Account</button>
+          </div>
+
+          {/* Quick amounts */}
+          <div className="card-dark" style={{padding:'20px 22px'}}>
+            <div className="lbl" style={{marginBottom:10}}>Quick Amounts</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              {[100,250,500,1000,2500,5000].map(a=>(
+                <button key={a} onClick={()=>setAmount(String(a))}
+                  style={{padding:'9px',borderRadius:10,cursor:'pointer',transition:'all 0.18s',
+                    background:parseFloat(amountVal)===a?`${wrapColor}18`:D.subtleBg,
+                    border:`1px solid ${parseFloat(amountVal)===a?wrapColor:D.subtleBorder}`,
+                    color:parseFloat(amountVal)===a?wrapColor:D.textPrimary,
+                    fontSize:13,fontWeight:600}}>
+                  {fmt(a)}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── ATM / POS ──────────────────────────────────────────────── */
+function ATMPOSPage() {
+  const { session, showToast, theme } = useApp();
+  const isLight = theme === 'light';
+  const subtleBg = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)';
+  const subtleBorder = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';
+  const divider = isLight ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.06)';
+  const [card, setCard] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState('pos');
+  const [f, setF] = useState({amount:'',merchant:'',category:'RETAIL',pin:''});
+  const set = k => v => setF(p=>({...p,[k]:v}));
+  const [txLoading, setTxLoading] = useState(false);
+  const [result, setResult] = useState(null);
+
+  useEffect(()=>{
+    (async()=>{
+      try { setCard(await api.getDebitCard(session.customerId)); }
+      catch { showToast('Could not load card','error'); }
+      finally { setLoading(false); }
+    })();
+  },[]);
+
+  async function simulate(){
+    if(!f.amount){ showToast('Enter an amount','error'); return; }
+    setTxLoading(true); setResult(null);
+    try {
+      const r = await api.authorizeDebit({cardId:card.id,accountId:session.accountId,amount:parseFloat(f.amount),transactionType:mode==='atm'?'ATM_WITHDRAWAL':'PURCHASE',merchantName:mode==='atm'?'ATM Withdrawal':(f.merchant||'Demo Merchant'),merchantCategory:f.category});
+      setResult(r);
+      if(r.approved) showToast(`Approved · Auth ${r.authCode}`,'success');
+      else showToast(`Declined · ${r.declineReason?.replace(/_/g,' ')}`,'error');
+      setCard(await api.getDebitCard(session.customerId));
+    } catch { showToast('Authorization error','error'); }
+    finally { setTxLoading(false); }
+  }
+
+  if(loading) return <Spinner/>;
+  const dPct = Math.min(100,(card.dailySpent/card.dailyLimit)*100);
+  const mPct = Math.min(100,(card.monthlySpent/card.monthlyLimit)*100);
+
+  return (
+    <div style={{padding:'40px',maxWidth:900,margin:'0 auto',display:'flex',flexDirection:'column',gap:28}}>
+      <div>
+        <div style={{fontSize:12,color:'var(--label2)',letterSpacing:'0.05em',textTransform:'uppercase',marginBottom:6}}>American Express · Debit Card Simulator</div>
+        <h1 style={{fontSize:32,fontWeight:700,letterSpacing:'-0.03em'}}>ATM / POS</h1>
+      </div>
+
+      {/* Card + Limits */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+        {/* AmEx debit card visual */}
+        <div className="debit-card" style={{minHeight:210}}>
+          <div style={{position:'relative',zIndex:1}}>
+            {/* Header: brand + status */}
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:32}}>
+              <div>
+                <div style={{fontWeight:900,fontSize:15,letterSpacing:'0.04em',color:'#fff',lineHeight:1}}>American Express</div>
+                <div style={{fontSize:9,color:'rgba(255,255,255,0.50)',letterSpacing:'0.10em',marginTop:3}}>PERSONAL BANKING DEBIT</div>
+              </div>
+              {/* EMV chip */}
+              <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:8}}>
+                <span className="badge" style={{
+                  background:card.status==='ACTIVE'?'rgba(48,209,88,0.22)':'rgba(255,55,95,0.22)',
+                  color:card.status==='ACTIVE'?'#6ee7b7':'#fca5a5',
+                  border:`1px solid ${card.status==='ACTIVE'?'rgba(48,209,88,0.40)':'rgba(255,55,95,0.40)'}`,
+                }}>{card.status}</span>
+                <div style={{width:38,height:28,borderRadius:6,background:'linear-gradient(135deg,#B5A054,#d4af37)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 2px 8px rgba(0,0,0,0.3)'}}>
+                  <div style={{width:24,height:16,borderRadius:4,background:'rgba(0,0,0,0.22)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                    <div style={{width:16,height:1,background:'rgba(255,255,255,0.35)'}}/>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Card number */}
+            <div style={{fontFamily:'monospace',fontSize:19,letterSpacing:'0.20em',color:'rgba(255,255,255,0.90)',marginBottom:28}}>{card.cardNumber}</div>
+            {/* Footer */}
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}>
+              <div>
+                <div style={{fontSize:9,color:'rgba(255,255,255,0.45)',marginBottom:2,letterSpacing:'0.08em'}}>VALID THRU</div>
+                <div style={{fontWeight:700,fontSize:14,color:'rgba(255,255,255,0.90)'}}>{card.expiryDate}</div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <div style={{fontSize:10,color:'rgba(255,255,255,0.35)',letterSpacing:'0.08em',marginBottom:2}}>MEMBER SINCE</div>
+                <div style={{fontWeight:700,fontSize:13,color:'rgba(255,255,255,0.70)'}}>{MOCK.rewards.memberSince}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Limits */}
+        <div className="card-dark" style={{padding:28,display:'flex',flexDirection:'column',gap:24}}>
+          {[
+            {label:'Daily Spend',spent:card.dailySpent,limit:card.dailyLimit,pct:dPct},
+            {label:'Monthly Spend',spent:card.monthlySpent,limit:card.monthlyLimit,pct:mPct},
+          ].map(l=>(
+            <div key={l.label}>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:10}}>
+                <span style={{fontSize:12,color:'var(--label2)',letterSpacing:'0.03em'}}>{l.label}</span>
+                <span style={{fontSize:13,fontWeight:700}}>{fmt(l.spent)} <span style={{color:'var(--label3)',fontWeight:400}}>/ {fmt(l.limit)}</span></span>
+              </div>
+              <div className="prog-track">
+                <div className="prog-fill" style={{width:`${l.pct}%`,background:l.pct>80?'var(--red)':l.pct>60?'var(--orange)':'var(--blue)'}}/>
+              </div>
+              <div style={{fontSize:11,color:'var(--label3)',marginTop:6}}>{fmt(l.limit-l.spent)} remaining</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Simulator */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+        <div className="card-dark" style={{padding:28,display:'flex',flexDirection:'column',gap:18}}>
+          <div style={{fontSize:14,fontWeight:700,letterSpacing:'-0.01em',marginBottom:4}}>Simulate Transaction</div>
+          <div className="seg">
+            <div className={`seg-item${mode==='pos'?' active':''}`} onClick={()=>setMode('pos')}>POS Purchase</div>
+            <div className={`seg-item${mode==='atm'?' active':''}`} onClick={()=>setMode('atm')}>ATM Withdrawal</div>
+          </div>
+          {mode==='pos' && <>
+            <Field label="Merchant Name"><TextInput value={f.merchant} onChange={set('merchant')} placeholder="Whole Foods Market"/></Field>
+            <Field label="Category">
+              <SelectInput value={f.category} onChange={set('category')} options={[{value:'RETAIL',label:'Retail'},{value:'GROCERY',label:'Grocery'},{value:'GAS',label:'Gas'},{value:'RESTAURANT',label:'Restaurant'},{value:'ONLINE',label:'Online'},{value:'HEALTHCARE',label:'Healthcare'}]}/>
+            </Field>
+          </>}
+          {mode==='atm' && <div style={{padding:14,background:subtleBg,borderRadius:10,fontSize:13,color:'var(--label2)'}}>Simulates a cash withdrawal at any ATM network terminal.</div>}
+          <Field label="Amount ($)"><TextInput value={f.amount} onChange={set('amount')} type="number" placeholder="0.00"/></Field>
+          <Field label="PIN" hint="Any 4 digits in demo mode"><TextInput value={f.pin} onChange={set('pin')} type="password" placeholder="••••"/></Field>
+
+          {/* Quick scenarios */}
+          <div style={{borderTop:`1px solid ${divider}`,paddingTop:16}}>
+            <div style={{fontSize:11,color:'var(--label2)',marginBottom:8,letterSpacing:'0.03em'}}>QUICK SCENARIOS</div>
+            <div style={{display:'flex',flexDirection:'column',gap:6}}>
+              {[{l:'$20 Coffee',a:'20',m:'Starbucks',t:'pos'},{l:'$200 ATM',a:'200',t:'atm'},{l:'$5,000 Limit Test',a:'5000',m:'Large Purchase',t:'pos'}].map(s=>(
+                <button key={s.l} onClick={()=>{setMode(s.t);setF(p=>({...p,amount:s.a,merchant:s.m||''}));}}
+                  style={{textAlign:'left',padding:'9px 12px',background:subtleBg,border:`1px solid ${subtleBorder}`,borderRadius:9,fontSize:12,color:'var(--label3)',cursor:'pointer',transition:'all 0.2s'}}
+                  onMouseEnter={e=>e.currentTarget.style.color=isLight?'#1d1d1f':'#fff'}
+                  onMouseLeave={e=>e.currentTarget.style.color='var(--label3)'}>{s.l}</button>
+              ))}
+            </div>
+          </div>
+
+          <button className="btn btn-primary" onClick={simulate} disabled={txLoading}>
+            {txLoading?<><div className="spin" style={{width:14,height:14,border:'2px solid rgba(255,255,255,0.3)',borderTopColor:'#fff',borderRadius:'50%'}}/>Processing…</>:mode==='atm'?'Withdraw Cash':'Authorize Purchase'}
+          </button>
+        </div>
+
+        {/* Result */}
+        <div className="card-dark" style={{padding:28,display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',minHeight:320}}>
+          {!result ? (
+            <div style={{textAlign:'center',color:'var(--s5)'}}>
+              <div style={{fontSize:56,marginBottom:16}}>◈</div>
+              <div style={{fontSize:14,color:'var(--label3)'}}>Run a transaction to see the authorization result</div>
+            </div>
+          ) : (
+            <div className="fade-up" style={{width:'100%',textAlign:'center',padding:24,borderRadius:18,
+              background:result.approved?'rgba(48,209,88,0.08)':'rgba(255,55,95,0.08)',
+              border:`1px solid ${result.approved?'rgba(48,209,88,0.2)':'rgba(255,55,95,0.2)'}`}}>
+              <div style={{fontSize:52,marginBottom:12}}>{result.approved?'✓':'✕'}</div>
+              <div style={{fontSize:22,fontWeight:800,letterSpacing:'-0.03em',color:result.approved?'var(--green)':'var(--red)',marginBottom:12}}>
+                {result.approved?'APPROVED':'DECLINED'}
+              </div>
+              {result.approved && <>
+                <div style={{fontFamily:'monospace',fontSize:18,fontWeight:700,color:isLight?'#1d1d1f':'#fff',background:subtleBg,border:`1px solid ${subtleBorder}`,padding:'8px 20px',borderRadius:8,display:'inline-block',marginBottom:12}}>{result.authCode}</div>
+                <div style={{fontSize:12,color:'var(--label2)'}}>Transaction ID: {result.transactionId?.slice(0,16)}…</div>
+              </>}
+              {!result.approved && <div style={{fontSize:14,fontWeight:600,color:'rgba(255,107,138,0.9)'}}>{result.declineReason?.replace(/_/g,' ')}</div>}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── ADMIN OVERVIEW ─────────────────────────────────────────── */
+function AdminDash() {
+  const { setPage, theme } = useApp();
+  const isLight = theme === 'light';
+  const divider = isLight ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.06)';
+  const hoverBg  = isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.05)';
+  const stats=[{l:'Total Customers',v:'3',i:'◉'},{l:'Active Accounts',v:'3',i:'▦'},{l:'Pending Applications',v:'2',i:'◎'},{l:'Total Deposits',v:'$55.2M',i:'↑'}];
+  return (
+    <div style={{padding:'40px',maxWidth:960,margin:'0 auto',display:'flex',flexDirection:'column',gap:28}}>
+      <div>
+        <div style={{fontSize:12,color:'var(--label2)',letterSpacing:'0.05em',textTransform:'uppercase',marginBottom:6}}>Operations</div>
+        <h1 style={{fontSize:32,fontWeight:700,letterSpacing:'-0.03em'}}>CCP Overview</h1>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16}}>
+        {stats.map(s=>(
+          <div key={s.l} className="card-dark" style={{padding:'22px 24px'}}>
+            <div style={{fontSize:22,marginBottom:12,color:'var(--label3)'}}>{s.i}</div>
+            <div className="stat-value">{s.v}</div>
+            <div style={{fontSize:12,color:'var(--label2)',marginTop:6}}>{s.l}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+        {[{p:'admin-ledger',i:'≋',t:'General Ledger',d:'GL accounts · Journal entries · Trial balance',c:'var(--blue)'},
+          {p:'admin-cust', i:'◉',t:'Customer Accounts',d:'Search customers · Transaction history',c:'var(--green)'},
+          {p:'admin-apps', i:'◎',t:'Applications',d:'Review KYC queue · Approve / Reject',c:'var(--orange)'}].map(l=>(
+          <div key={l.p} className="card-dark" style={{padding:28,cursor:'pointer',transition:'all 0.25s var(--ease)',borderLeft:`3px solid ${l.c}`}} onClick={()=>setPage(l.p)}
+            onMouseEnter={e=>{e.currentTarget.style.background=hoverBg;e.currentTarget.style.transform='translateY(-2px)';}}
+            onMouseLeave={e=>{e.currentTarget.style.background='';e.currentTarget.style.transform='';}}>
+            <div style={{fontSize:24,marginBottom:16,color:l.c}}>{l.i}</div>
+            <div style={{fontWeight:700,fontSize:16,letterSpacing:'-0.02em',marginBottom:6}}>{l.t}</div>
+            <div style={{fontSize:12,color:'var(--label2)',lineHeight:1.6}}>{l.d}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="card-dark" style={{overflow:'hidden'}}>
+        <div style={{padding:'18px 20px',borderBottom:`1px solid ${divider}`,fontSize:13,fontWeight:700,letterSpacing:'-0.01em'}}>Recent Journal Entries</div>
+        <table className="tbl tbl-dark">
+          <thead><tr>{['Entry #','Description','Debits','Credits','Status','Posted'].map(h=><th key={h}>{h}</th>)}</tr></thead>
+          <tbody>{MOCK.journalEntries.map(j=>(
+            <tr key={j.id}>
+              <td style={{fontFamily:'monospace',color:'var(--blue)',fontSize:12}}>{j.entryNumber}</td>
+              <td style={{maxWidth:220,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{j.description}</td>
+              <td style={{fontWeight:600}}>{fmt(j.totalDebits)}</td>
+              <td style={{fontWeight:600}}>{fmt(j.totalCredits)}</td>
+              <td><Badge label={j.status} color="green"/></td>
+              <td style={{color:'var(--label2)',fontSize:12}}>{fmtDate(j.postedAt)}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ─── ADMIN LEDGER ───────────────────────────────────────────── */
+function AdminLedger() {
+  const { showToast } = useApp();
+  const [tab,setTab]=useState('accounts');
+  const [glAccts,setGlAccts]=useState([]);
+  const [entries,setEntries]=useState([]);
+  const [tb,setTb]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [sel,setSel]=useState(null);
+
+  useEffect(()=>{
+    (async()=>{
+      setLoading(true);
+      try { const [a,e,t]=await Promise.all([api.getGlAccounts(),api.getJournalEntries(),api.getTrialBalance()]); setGlAccts(a);setEntries(e.content||e);setTb(t); }
+      catch { showToast('Failed to load ledger','error'); }
+      finally { setLoading(false); }
+    })();
+  },[]);
+
+  const totalDr=tb.reduce((s,r)=>s+r.debitTotal,0);
+  const totalCr=tb.reduce((s,r)=>s+r.creditTotal,0);
+  const balanced=Math.abs(totalDr-totalCr)<0.01;
+
+  return (
+    <div style={{padding:'40px',maxWidth:960,margin:'0 auto',display:'flex',flexDirection:'column',gap:24}}>
+      <div>
+        <div style={{fontSize:12,color:'var(--label2)',letterSpacing:'0.05em',textTransform:'uppercase',marginBottom:6}}>Accounting</div>
+        <h1 style={{fontSize:32,fontWeight:700,letterSpacing:'-0.03em'}}>General Ledger</h1>
+      </div>
+
+      <div className="seg" style={{width:'fit-content'}}>
+        {[['accounts','Chart of Accounts'],['entries','Journal Entries'],['trial','Trial Balance']].map(([t,l])=>(
+          <div key={t} className={`seg-item${tab===t?' active':''}`} onClick={()=>setTab(t)}>{l}</div>
+        ))}
+      </div>
+
+      {loading ? <Spinner/> : (<>
+        {tab==='accounts' && (
+          <div className="card-dark fade-up" style={{overflow:'hidden'}}>
+            <table className="tbl tbl-dark">
+              <thead><tr>{['GL Code','Account Name','Type','Normal Bal.','Balance'].map(h=><th key={h}>{h}</th>)}</tr></thead>
+              <tbody>{glAccts.map(a=>(
+                <tr key={a.id}>
+                  <td style={{fontFamily:'monospace',color:'var(--blue)',fontWeight:700}}>{a.code}</td>
+                  <td style={{fontWeight:600}}>{a.name}</td>
+                  <td><Badge label={a.type} color={a.type==='ASSET'?'green':a.type==='REVENUE'?'blue':a.type==='LIABILITY'?'orange':'neutral'}/></td>
+                  <td><Badge label={a.normalBalance} color="neutral"/></td>
+                  <td style={{fontWeight:700,fontFamily:'monospace'}}>{fmt(a.balance)}</td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        )}
+        {tab==='entries' && (
+          <div className="card-dark fade-up" style={{overflow:'hidden'}}>
+            <table className="tbl tbl-dark">
+              <thead><tr>{['Entry #','Description','Debits','Credits','Status','Posted',''].map(h=><th key={h}>{h}</th>)}</tr></thead>
+              <tbody>{entries.map(e=>(
+                <tr key={e.id}>
+                  <td style={{fontFamily:'monospace',color:'var(--blue)',fontWeight:700,fontSize:12}}>{e.entryNumber}</td>
+                  <td style={{maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{e.description}</td>
+                  <td style={{fontWeight:600}}>{fmt(e.totalDebits)}</td>
+                  <td style={{fontWeight:600}}>{fmt(e.totalCredits)}</td>
+                  <td><Badge label={e.status} color="green"/></td>
+                  <td style={{color:'var(--label2)',fontSize:12,whiteSpace:'nowrap'}}>{fmtDate(e.postedAt)}</td>
+                  <td><button className="btn btn-dark btn-sm" onClick={()=>setSel(e)}>Detail</button></td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div>
+        )}
+        {tab==='trial' && (
+          <div className="fade-up" style={{display:'flex',flexDirection:'column',gap:16}}>
+            <div className="card-dark" style={{padding:'18px 24px',display:'flex',alignItems:'center',gap:16,borderLeft:`3px solid ${balanced?'var(--green)':'var(--red)'}`}}>
+              <div style={{fontSize:28,color:balanced?'var(--green)':'var(--red)'}}>{balanced?'✓':'⚠'}</div>
+              <div>
+                <div style={{fontWeight:700,color:balanced?'var(--green)':'var(--red)',fontSize:15}}>{balanced?'Trial Balance IN BALANCE':'Trial Balance OUT OF BALANCE'}</div>
+                <div style={{fontSize:13,color:'var(--label2)',marginTop:3}}>Total Debits: {fmt(totalDr)} · Total Credits: {fmt(totalCr)}</div>
+              </div>
+            </div>
+            <div className="card-dark" style={{overflow:'hidden'}}>
+              <table className="tbl tbl-dark">
+                <thead><tr>{['GL Code','Account Name','Type','Debit Total','Credit Total'].map(h=><th key={h}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {tb.map((r,i)=>(
+                    <tr key={i}>
+                      <td style={{fontFamily:'monospace',color:'var(--blue)',fontWeight:700}}>{r.account?.code}</td>
+                      <td style={{fontWeight:600}}>{r.account?.name}</td>
+                      <td><Badge label={r.account?.type} color="neutral"/></td>
+                      <td style={{fontWeight:600,fontFamily:'monospace'}}>{r.debitTotal>0?fmt(r.debitTotal):'—'}</td>
+                      <td style={{fontWeight:600,fontFamily:'monospace'}}>{r.creditTotal>0?fmt(r.creditTotal):'—'}</td>
+                    </tr>
+                  ))}
+                  <tr style={{borderTop:'2px solid rgba(255,255,255,0.12)'}}>
+                    <td colSpan={3} style={{fontWeight:700,textAlign:'right',fontSize:12,letterSpacing:'0.04em',textTransform:'uppercase',color:'var(--label2)'}}>Totals</td>
+                    <td style={{fontWeight:800,fontFamily:'monospace',fontSize:15}}>{fmt(totalDr)}</td>
+                    <td style={{fontWeight:800,fontFamily:'monospace',fontSize:15}}>{fmt(totalCr)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </>)}
+
+      {sel && (
+        <Modal title={sel.entryNumber} onClose={()=>setSel(null)}>
+          <div style={{display:'flex',flexDirection:'column',gap:16}}>
+            <div><div style={{fontSize:11,color:'var(--label2)',marginBottom:4}}>DESCRIPTION</div><div style={{fontWeight:600}}>{sel.description}</div></div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              <div><div style={{fontSize:11,color:'var(--label2)',marginBottom:4}}>STATUS</div>{appStatusBadge(sel.status)}</div>
+              <div><div style={{fontSize:11,color:'var(--label2)',marginBottom:4}}>POSTED</div><div style={{fontSize:13}}>{fmtDate(sel.postedAt)}</div></div>
+            </div>
+            <div style={{borderTop:'1px solid rgba(255,255,255,0.07)',paddingTop:16}}>
+              <div style={{fontSize:11,color:'var(--label2)',marginBottom:12}}>DEBIT / CREDIT LINES</div>
+              {[{a:'1000 Cash & Equivalents',s:'DEBIT',v:sel.totalDebits},{a:'1100 Customer Deposits',s:'CREDIT',v:sel.totalCredits}].map((l,i)=>(
+                <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'12px 14px',background:'rgba(255,255,255,0.04)',borderRadius:10,marginBottom:8}}>
+                  <span style={{fontSize:13}}>{l.a}</span>
+                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                    <Badge label={l.s} color={l.s==='DEBIT'?'blue':'green'}/>
+                    <span style={{fontFamily:'monospace',fontWeight:700}}>{fmt(l.v)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+/* ─── ADMIN CUSTOMERS ────────────────────────────────────────── */
+function AdminCustomers() {
+  const { showToast, theme } = useApp();
+  const isLight = theme === 'light';
+  const subtleBorder = isLight ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.07)';
+  const hoverBg = isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)';
+  const divider = isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)';
+  const [customers,setCustomers]=useState([]);
+  const [search,setSearch]=useState('');
+  const [sel,setSel]=useState(null);
+  const [selTxns,setSelTxns]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [txLoading,setTxLoading]=useState(false);
+
+  useEffect(()=>{ (async()=>{ try{setCustomers(await api.getAllCustomers());}catch{showToast('Failed','error');}finally{setLoading(false);} })(); },[]);
+
+  async function selectCustomer(c){
+    setSel(c); setTxLoading(true);
+    try { const d=await api.getTransactions(c.accountId,0,10); setSelTxns(d.content||[]); }
+    catch { setSelTxns([]); }
+    finally { setTxLoading(false); }
+  }
+
+  const filtered=customers.filter(c=>!search||`${c.firstName} ${c.lastName} ${c.email}`.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div style={{padding:'40px',maxWidth:1080,margin:'0 auto',display:'flex',flexDirection:'column',gap:24}}>
+      <div>
+        <div style={{fontSize:12,color:'var(--label2)',letterSpacing:'0.05em',textTransform:'uppercase',marginBottom:6}}>CCP Ops</div>
+        <h1 style={{fontSize:32,fontWeight:700,letterSpacing:'-0.03em'}}>Customer Accounts</h1>
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'280px 1fr',gap:20,alignItems:'start'}}>
+        {/* List */}
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search…" className="inp"/>
+          {loading ? <Spinner/> : filtered.map(c=>(
+            <div key={c.id} className="card-dark" style={{padding:'16px 18px',cursor:'pointer',transition:'all 0.2s',
+              borderColor: sel?.id===c.id?'rgba(0,113,227,0.5)':subtleBorder,
+              background: sel?.id===c.id?'rgba(0,113,227,0.08)':''}} onClick={()=>selectCustomer(c)}
+              onMouseEnter={e=>{if(sel?.id!==c.id)e.currentTarget.style.background=hoverBg;}}
+              onMouseLeave={e=>{if(sel?.id!==c.id)e.currentTarget.style.background='';}}>
+              <div style={{display:'flex',alignItems:'center',gap:12}}>
+                <div style={{width:36,height:36,borderRadius:'50%',background:'linear-gradient(135deg,var(--blue),#7c3aed)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:13,flexShrink:0}}>{c.firstName[0]}{c.lastName[0]}</div>
+                <div style={{minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:14,letterSpacing:'-0.01em'}}>{c.firstName} {c.lastName}</div>
+                  <div style={{fontSize:11,color:'var(--label2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.email}</div>
+                </div>
+              </div>
+              <div style={{display:'flex',justifyContent:'space-between',marginTop:12,paddingTop:12,borderTop:`1px solid ${divider}`}}>
+                <span style={{fontSize:12,color:'var(--label2)'}}>Balance</span>
+                <span style={{fontSize:14,fontWeight:700}}>{fmt(c.balance)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Detail */}
+        {!sel ? (
+          <div className="card-dark" style={{display:'flex',alignItems:'center',justifyContent:'center',padding:60,textAlign:'center',minHeight:400}}>
+            <div><div style={{fontSize:44,marginBottom:16,color:'var(--s5)'}}>◉</div><div style={{color:'var(--label3)',fontSize:14}}>Select a customer to view their account</div></div>
+          </div>
+        ) : (
+          <div style={{display:'flex',flexDirection:'column',gap:16}} className="fade-in">
+            <div className="card-dark" style={{padding:28}}>
+              <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:24}}>
+                <div style={{width:56,height:56,borderRadius:'50%',background:'linear-gradient(135deg,var(--blue),#7c3aed)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:20}}>{sel.firstName[0]}{sel.lastName[0]}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:22,fontWeight:800,letterSpacing:'-0.03em'}}>{sel.firstName} {sel.lastName}</div>
+                  <div style={{fontSize:13,color:'var(--label2)',marginTop:2}}>{sel.email}</div>
+                </div>
+                <div style={{textAlign:'right'}}>
+                  <div style={{fontSize:11,color:'var(--label2)',marginBottom:4}}>BALANCE</div>
+                  <div style={{fontSize:24,fontWeight:800,letterSpacing:'-0.03em'}}>{fmt(sel.balance)}</div>
+                  <Badge label={sel.status} color="green"/>
+                </div>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16,paddingTop:20,borderTop:'1px solid rgba(255,255,255,0.07)'}}>
+                {[['Customer ID',sel.id],['Account ID',sel.accountId],['Member Since','Jan 2024']].map(([k,v])=>(
+                  <div key={k}><div style={{fontSize:11,color:'var(--label2)',letterSpacing:'0.03em'}}>{k}</div><div style={{fontSize:13,fontWeight:600,fontFamily:k.includes('ID')?'monospace':'inherit',color:k.includes('ID')?'var(--blue)':'#fff',marginTop:3}}>{v}</div></div>
+                ))}
+              </div>
+            </div>
+            <div className="card-dark" style={{overflow:'hidden'}}>
+              <div style={{padding:'16px 20px',borderBottom:'1px solid rgba(255,255,255,0.06)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontWeight:700,fontSize:13}}>Transaction History</span>
+                <span style={{fontSize:12,color:'var(--label3)'}}>Last 10</span>
+              </div>
+              {txLoading ? <Spinner/> : (
+                <table className="tbl tbl-dark">
+                  <thead><tr>{['Date','Description','Type','Amount','Status'].map(h=><th key={h}>{h}</th>)}</tr></thead>
+                  <tbody>{selTxns.length===0
+                    ? <tr><td colSpan={5} style={{textAlign:'center',color:'var(--label3)',padding:'32px 0'}}>No transactions</td></tr>
+                    : selTxns.map(tx=>(
+                    <tr key={tx.id}>
+                      <td style={{fontSize:12,color:'var(--label2)',whiteSpace:'nowrap'}}>{fmtDate(tx.createdAt)}</td>
+                      <td style={{fontWeight:600,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{tx.description}</td>
+                      <td><Badge label={tx.type} color={tx.type==='CREDIT'?'green':'neutral'}/></td>
+                      <td style={{fontWeight:700,color:tx.type==='CREDIT'?'var(--green)':'#fff'}}>{tx.type==='CREDIT'?'+':'-'}{fmt(tx.amount)}</td>
+                      <td>{txBadge(tx.status)}</td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── ADMIN APPLICATIONS ─────────────────────────────────────── */
+function AdminApps() {
+  const { showToast } = useApp();
+  const [apps,setApps]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const [statusFilter,setStatusFilter]=useState('');
+  const [acting,setActing]=useState('');
+
+  const load=useCallback(async()=>{ setLoading(true); try{setApps(await api.getApplications(statusFilter||undefined));}catch{showToast('Failed','error');}finally{setLoading(false);} },[statusFilter]);
+  useEffect(()=>{load();},[load]);
+
+  async function act(id,status){
+    setActing(id+status);
+    try { await api.updateApplicationStatus(id,status); showToast(`Status updated to ${status}`,'success'); load(); }
+    catch { showToast('Action failed','error'); }
+    finally { setActing(''); }
+  }
+
+  const counts={};
+  MOCK.applications.forEach(a=>counts[a.status]=(counts[a.status]||0)+1);
+
+  return (
+    <div style={{padding:'40px',maxWidth:960,margin:'0 auto',display:'flex',flexDirection:'column',gap:24}}>
+      <div>
+        <div style={{fontSize:12,color:'var(--label2)',letterSpacing:'0.05em',textTransform:'uppercase',marginBottom:6}}>CCP Ops</div>
+        <h1 style={{fontSize:32,fontWeight:700,letterSpacing:'-0.03em'}}>Applications</h1>
+      </div>
+
+      {/* Status chips */}
+      <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+        {[['','All',MOCK.applications.length],['SUBMITTED','Submitted',counts.SUBMITTED||0],['KYC_PENDING','KYC Pending',counts.KYC_PENDING||0],['APPROVED','Approved',counts.APPROVED||0],['REJECTED','Rejected',counts.REJECTED||0]].map(([s,l,c])=>(
+          <button key={s} onClick={()=>setStatusFilter(s)}
+            style={{padding:'8px 18px',borderRadius:99,border:`1.5px solid ${statusFilter===s?'var(--blue)':'rgba(255,255,255,0.10)'}`,background:statusFilter===s?'rgba(0,113,227,0.12)':'transparent',color:statusFilter===s?'var(--blue)':'var(--label2)',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all 0.2s'}}>
+            {l} <span style={{fontWeight:800}}>{c}</span>
+          </button>
+        ))}
+      </div>
+
+      {loading ? <Spinner/> : (
+        <div className="card-dark fade-up" style={{overflow:'hidden'}}>
+          <table className="tbl tbl-dark">
+            <thead><tr>{['Applicant','Email','Account','Status','Submitted','Actions'].map(h=><th key={h}>{h}</th>)}</tr></thead>
+            <tbody>{apps.map(a=>(
+              <tr key={a.id}>
+                <td>
+                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                    <div style={{width:32,height:32,borderRadius:'50%',background:'linear-gradient(135deg,var(--blue),#7c3aed)',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,fontSize:12,flexShrink:0}}>{a.firstName[0]}{a.lastName[0]}</div>
+                    <span style={{fontWeight:700}}>{a.firstName} {a.lastName}</span>
+                  </div>
+                </td>
+                <td style={{color:'var(--label2)',fontSize:13}}>{a.email}</td>
+                <td><Badge label={a.accountType} color="blue"/></td>
+                <td>{appStatusBadge(a.status)}</td>
+                <td style={{color:'var(--label2)',fontSize:12,whiteSpace:'nowrap'}}>{fmtDate(a.submittedAt)}</td>
+                <td>
+                  <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                    {a.status==='SUBMITTED'    && <button className="btn btn-dark btn-sm" disabled={!!acting} onClick={()=>act(a.id,'KYC_PENDING')}>Start KYC</button>}
+                    {a.status==='KYC_PENDING'  && <button className="btn btn-success btn-sm" disabled={!!acting} onClick={()=>act(a.id,'KYC_APPROVED')}>Approve KYC</button>}
+                    {['KYC_APPROVED','SUBMITTED'].includes(a.status) && <button className="btn btn-primary btn-sm" disabled={!!acting} onClick={()=>act(a.id,'APPROVED')}>Approve</button>}
+                    {!['REJECTED','ACCOUNT_CREATED'].includes(a.status) && <button className="btn btn-danger btn-sm" disabled={!!acting} onClick={()=>act(a.id,'REJECTED')}>Reject</button>}
+                    {a.status==='REJECTED' && <span style={{fontSize:12,color:'var(--label3)',fontStyle:'italic',padding:'4px 8px'}}>Closed</span>}
+                  </div>
+                </td>
+              </tr>
+            ))}{apps.length===0&&<tr><td colSpan={6} style={{textAlign:'center',color:'var(--label3)',padding:'48px 0'}}>No applications</td></tr>}</tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── ROOT ───────────────────────────────────────────────────── */
+function App() {
+  const [role,setRole]=useState(null);
+  const [page,setPage]=useState(null);
+  const [session,setSession]=useState(null);
+  const [toast,setToast]=useState(null);
+  const [demoMode,setDemoMode]=useState(true);
+  const [theme,setTheme]=useState('dark');
+
+  useEffect(()=>{
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const showToast = (message,type='success') => setToast({message,type});
+  const toggleDemo = () => { DEMO_MODE=!DEMO_MODE; setDemoMode(DEMO_MODE); showToast(DEMO_MODE?'Demo mode on':'Live API mode','info'); };
+  const toggleTheme = () => setTheme(t => t==='dark'?'light':'dark');
+
+  const ctx={role,setRole,page,setPage,session,setSession,toast,setToast,showToast,demoMode,toggleDemo,theme,toggleTheme};
+
+  if(!role||!page) return (
+    <Ctx.Provider value={ctx}>
+      <LoginPage/>
+      {toast&&<Toast message={toast.message} type={toast.type} onClose={()=>setToast(null)}/>}
+    </Ctx.Provider>
+  );
+
+  const pages={
+    'onboarding':   <OnboardingPage/>,
+    'dashboard':    <DashboardPage/>,
+    'transactions': <TransactionsPage/>,
+    'fund':         <FundAccountPage/>,
+    'atm':          <ATMPOSPage/>,
+    'admin-dash':   <AdminDash/>,
+    'admin-ledger': <AdminLedger/>,
+    'admin-cust':   <AdminCustomers/>,
+    'admin-apps':   <AdminApps/>,
+  };
+
+  return (
+    <Ctx.Provider value={ctx}>
+      <Layout>{pages[page]||<div style={{padding:40,color:'var(--label2)'}}>Page not found</div>}</Layout>
+    </Ctx.Provider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

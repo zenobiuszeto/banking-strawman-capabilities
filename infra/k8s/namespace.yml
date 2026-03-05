@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: banking
+  labels:
+    name: banking
+    team: platform-engineering
+    environment: production

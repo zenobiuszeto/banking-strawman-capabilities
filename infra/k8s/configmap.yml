@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: banking-platform-config
+  namespace: banking
+  labels:
+    app: banking-platform
+data:
+  # Spring profiles
+  SPRING_PROFILES_ACTIVE: "kubernetes"
+
+  # Server
+  SERVER_PORT: "8080"
+  SERVER_SERVLET_CONTEXT_PATH: "/api"
+
+  # Database (credentials come from Vault)
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-service.banking.svc.cluster.local:5432/banking_db"
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "validate"
+
+  # MongoDB
+  SPRING_DATA_MONGODB_DATABASE: "banking_db"
+
+  # Redis
+  SPRING_DATA_REDIS_PORT: "6379"
+
+  # Kafka
+  SPRING_KAFKA_CONSUMER_GROUP_ID: "banking-platform-k8s"
+
+  # OpenTelemetry
+  MANAGEMENT_OTLP_TRACING_ENDPOINT: "http://otel-collector-service.observability.svc.cluster.local:4317"
+  MANAGEMENT_TRACING_SAMPLING_PROBABILITY: "1.0"
+
+  # Actuator
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,metrics,prometheus"
+  MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+
+  # Keycloak / OAuth2
+  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: "https://keycloak.bankingplatform.com/realms/banking"
+
+  # Consul
+  SPRING_CLOUD_CONSUL_HOST: "consul-service.infra.svc.cluster.local"
+  SPRING_CLOUD_CONSUL_PORT: "8500"
+
+  # Temporal
+  TEMPORAL_SERVICE_TARGET: "temporal-frontend.temporal.svc.cluster.local:7233"
+  TEMPORAL_NAMESPACE: "banking"
+
+  # Logging
+  LOGGING_LEVEL_COM_BANKING: "INFO"
+  LOGGING_LEVEL_ORG_HIBERNATE_SQL: "WARN"

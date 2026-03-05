@@ -1,0 +1,66 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: banking-platform-hpa
+  namespace: banking
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: banking-platform
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+    # Custom metric — RPS from Prometheus (requires prometheus-adapter)
+    - type: Pods
+      pods:
+        metric:
+          name: http_server_requests_seconds_count
+        target:
+          type: AverageValue
+          averageValue: "200"   # scale when avg pod handles >200 req/s
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: banking-platform-pdb
+  namespace: banking
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: banking-platform
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: banking-platform-sa
+  namespace: banking
+  annotations:
+    # IRSA — bind to AWS IAM role for S3, Secrets Manager access
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/banking-platform-role

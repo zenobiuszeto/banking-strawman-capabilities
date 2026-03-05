@@ -1,0 +1,135 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: banking-platform
+  namespace: banking
+  labels:
+    app: banking-platform
+    version: "1.0"
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: banking-platform
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: banking-platform
+        version: "1.0"
+      annotations:
+        # Vault Agent Sidecar Injector
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "banking-platform"
+        vault.hashicorp.com/agent-inject-secret-db: "secret/data/banking-platform/db"
+        vault.hashicorp.com/agent-inject-template-db: |
+          {{- with secret "secret/data/banking-platform/db" -}}
+          SPRING_DATASOURCE_USERNAME={{ .Data.data.username }}
+          SPRING_DATASOURCE_PASSWORD={{ .Data.data.password }}
+          {{- end }}
+        vault.hashicorp.com/agent-inject-secret-mongo: "secret/data/banking-platform/mongodb"
+        vault.hashicorp.com/agent-inject-template-mongo: |
+          {{- with secret "secret/data/banking-platform/mongodb" -}}
+          SPRING_DATA_MONGODB_URI={{ .Data.data.connection_string }}
+          {{- end }}
+        # Prometheus scraping
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/api/actuator/prometheus"
+        prometheus.io/port: "8080"
+    spec:
+      serviceAccountName: banking-platform-sa
+      terminationGracePeriodSeconds: 60
+
+      # Graceful shutdown — wait for in-flight requests
+      containers:
+        - name: banking-platform
+          image: ghcr.io/your-org/banking-platform:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: banking-platform-config
+          env:
+            # These are injected by Vault Agent from /vault/secrets/db
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: banking-platform-secrets
+                  key: db-username
+                  optional: true   # overridden by Vault in prod
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: banking-platform-secrets
+                  key: db-password
+                  optional: true
+            - name: SPRING_DATA_REDIS_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: banking-platform-secrets
+                  key: redis-host
+          resources:
+            requests:
+              cpu: 500m
+              memory: 512Mi
+            limits:
+              cpu: "2"
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /api/actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /api/actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /api/actuator/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30    # up to 150s to start
+          lifecycle:
+            preStop:
+              exec:
+                command: [ "/bin/sh", "-c", "sleep 10" ]   # drain in-flight requests
+          volumeMounts:
+            - name: vault-secrets
+              mountPath: /vault/secrets
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: vault-secrets
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - banking-platform
+                topologyKey: kubernetes.io/hostname
